@@ -6,6 +6,6 @@ reviews:
   poem: false
   auto_review:
     enabled: true
-    base_branches: [".*"]
+    base_branches: [ ".*" ]
 chat:
-  auto_reply: true                # the wildcard '*' includes all branches
+  auto_reply: true

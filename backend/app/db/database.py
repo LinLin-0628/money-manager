@@ -4,8 +4,8 @@ from sqlalchemy.orm import sessionmaker, Session
 
 from app.core.settings import settings
 
-engine = create_engine(settings.database_url, echo=settings.debug, future=True)
-SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False, future=True)
+engine = create_engine(settings.database_url, echo=settings.debug)
+SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 
 
 def get_db() -> Generator[Session, None, None]:

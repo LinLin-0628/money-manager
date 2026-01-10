@@ -7,7 +7,7 @@ class Settings(BaseSettings):
         env_file=".env", env_file_encoding="utf-8", extra="ignore"
     )
 
-    debug: bool = True
+    debug: bool = False
 
     # Database
     db_name: str
