@@ -2,12 +2,11 @@ import logging
 import logging.config
 from pathlib import Path
 
-from pythonjsonlogger import json
+from pythonjsonlogger.json import JsonFormatter
 
 from app.core.settings import settings
 
 LOG_DIR = Path("logs")
-LOG_DIR.mkdir(exist_ok=True)
 LOG_FILE = LOG_DIR / "app.log"
 
 LOGGING_CONFIG = {
@@ -15,7 +14,7 @@ LOGGING_CONFIG = {
     "disable_existing_loggers": False,
     "formatters": {
         "json": {
-            "()": json.JsonFormatter,
+            "()": JsonFormatter,
             "fmt": "%(asctime)s %(levelname)s %(name)s %(message)s",
         },
     },
@@ -37,4 +36,5 @@ LOGGING_CONFIG = {
 
 
 def setup_logging():
+    LOG_DIR.mkdir(exist_ok=True)
     logging.config.dictConfig(LOGGING_CONFIG)

@@ -1,9 +1,10 @@
 from typing import Annotated
-
-from pydantic import BaseModel, EmailStr, ConfigDict, field_validator
 from uuid import UUID
 
+from pydantic import BaseModel, ConfigDict, EmailStr, field_validator
 
+
+# TODO: Add field validator ensure password is safe enough
 class UserCreate(BaseModel):
     email: Annotated[str, EmailStr]
     password: str

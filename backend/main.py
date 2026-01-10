@@ -1,11 +1,21 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
-from app.api.router import api_router
 from fastapi.middleware.cors import CORSMiddleware
+
+from app.api.router import api_router
 from app.core.exception_handler import add_exception_handler
 from app.core.logging import setup_logging
 from app.core.middlewares import RequestLoggingMiddleware
 
-setup_logging()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    setup_logging()
+    yield
+    # Shutdown (if needed)
+
 
 origins = [
     "http://localhost:5173",  # Vite default
@@ -13,7 +23,7 @@ origins = [
     "http://127.0.0.1:5173",
 ]
 
-app = FastAPI(title="Money Manager")
+app = FastAPI(title="Money Manager", lifespan=lifespan)
 
 # Add exception handler
 add_exception_handler(app)

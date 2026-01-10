@@ -8,7 +8,7 @@ class AppException(Exception):
     def __init__(self, message: str | None = None, details: dict | None = None) -> None:
         self.message = message or self.message
         self.details = details
-        super().__init__(message)
+        super().__init__(self.message)
 
 
 class UserAlreadyExists(AppException):
