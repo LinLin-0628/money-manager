@@ -56,7 +56,7 @@ def add_exception_handler(app: FastAPI):
         return JSONResponse(
             status_code=status_code,
             content={
-                "request_id": request.state.request_id,
+                "request_id": get_request_id(request),
                 "error": {"message": "Internal Server Error"},
             },
         )

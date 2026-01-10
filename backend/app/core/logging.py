@@ -22,6 +22,10 @@ LOGGING_CONFIG = {
             "()": UTCJsonFormatter,
             "fmt": "%(asctime)s %(levelname)s %(name)s %(message)s",
         },
+        "console": {
+            "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+            "datefmt": "%Y-%m-%d %H:%M:%S",
+        },
     },
     "handlers": {
         "file": {
@@ -32,10 +36,15 @@ LOGGING_CONFIG = {
             "backupCount": 5,
             "encoding": "utf-8",
         },
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "console",
+            "stream": "ext://sys.stdout",
+        },
     },
     "root": {
         "level": "DEBUG" if settings.debug else "INFO",
-        "handlers": ["file"],
+        "handlers": ["file", "console"],
     },
 }
 
