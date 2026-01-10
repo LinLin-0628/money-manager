@@ -1,0 +1,179 @@
+############################
+# Python bytecode / cache
+############################
+__pycache__/
+*.py[cod]
+*$py.class
+
+############################
+# C extensions
+############################
+*.so
+
+############################
+# Distribution / packaging
+############################
+.Python
+build/
+dist/
+wheels/
+develop-eggs/
+downloads/
+eggs/
+.eggs/
+lib64/
+parts/
+sdist/
+var/
+share/python-wheels/
+pip-wheel-metadata/
+*.egg-info/
+*.egg
+.installed.cfg
+MANIFEST
+
+############################
+# PyInstaller
+############################
+*.manifest
+*.spec
+
+############################
+# Installer logs
+############################
+pip-log.txt
+pip-delete-this-directory.txt
+
+############################
+# Virtual environments
+############################
+.env*
+.envrc
+.venv/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+__pypackages__/
+
+############################
+# Dependency managers
+############################
+.pdm-python
+.pdm-build/
+.pdm.toml
+poetry.toml
+.pixi
+
+############################
+# Test / coverage reports
+############################
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.pytest_cache/
+.hypothesis/
+cover/
+
+############################
+# Django
+############################
+*.log
+*.pot
+db.sqlite3
+db.sqlite3-journal
+*.db
+*.sqlite3
+local_settings.py
+media/
+staticfiles/
+
+############################
+# Flask
+############################
+instance/
+.webassets-cache
+
+############################
+# Scrapy
+############################
+.scrapy
+
+############################
+# Sphinx / MkDocs
+############################
+docs/_build/
+/site
+
+############################
+# PyBuilder
+############################
+.pybuilder/
+target/
+
+############################
+# Jupyter / IPython
+############################
+.ipynb_checkpoints
+profile_default/
+ipython_config.py
+
+############################
+# Celery / MQ / Cache
+############################
+celerybeat-schedule
+celerybeat.pid
+*.rdb
+*.aof
+*.pid
+mnesia/
+rabbitmq/
+rabbitmq-data/
+activemq-data/
+
+############################
+# Type checkers / linters
+############################
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+.pytype/
+.ruff_cache/
+pyrightconfig.json
+
+############################
+# IDE / Editors
+############################
+.vscode/
+.idea/
+.spyderproject
+.spyproject
+.ropeproject
+*.sublime-project
+*.sublime-workspace
+
+############################
+# OS files
+############################
+.DS_Store
+Thumbs.db
+
+############################
+# Misc / tools
+############################
+cython_debug/
+.pypirc
+.abstra/
+marimo/_static/
+marimo/_lsp/
+__marimo__/
+.streamlit/secrets.toml
+*.http
