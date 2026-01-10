@@ -1,5 +1,6 @@
 import logging
 import logging.config
+import time
 from pathlib import Path
 
 from pythonjsonlogger.json import JsonFormatter
@@ -9,12 +10,16 @@ from app.core.settings import settings
 LOG_DIR = Path("logs")
 LOG_FILE = LOG_DIR / "app.log"
 
+class UTCJsonFormatter(JsonFormatter):
+    """JSON formatter that uses UTC time"""
+    converter = time.gmtime
+
 LOGGING_CONFIG = {
     "version": 1,
     "disable_existing_loggers": False,
     "formatters": {
         "json": {
-            "()": JsonFormatter,
+            "()": UTCJsonFormatter,
             "fmt": "%(asctime)s %(levelname)s %(name)s %(message)s",
         },
     },
