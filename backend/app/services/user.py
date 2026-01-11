@@ -75,3 +75,19 @@ class UserService:
             )
 
             raise UserAlreadyExists() from e
+
+    def get_user_by_email(self, email: str) -> User | None:
+        logger.info("Get user by email start", extra={"email": anonymize_sensitive_data(email, SensitiveField.EMAIL)})
+
+        user = self.user_repo.get_user_by_email(email)
+
+        logger.info(
+            "Get user by email complete",
+            extra={
+                "email": anonymize_sensitive_data(user.email, SensitiveField.EMAIL),
+                "user_id": user.id if user else None,
+                "found": user is not None,
+            },
+        )
+
+        return user

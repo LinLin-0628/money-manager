@@ -31,3 +31,8 @@ class UserRead(BaseModel):
     id: UUID
     email: Annotated[str, EmailStr]
     name: str
+
+
+class UserLoginForm(BaseModel):
+    email: Annotated[str, EmailStr]
+    password: str
