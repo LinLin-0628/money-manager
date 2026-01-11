@@ -1,5 +1,27 @@
-from fastapi import Request
+import hashlib
+import hmac
+
+from app.core.settings import settings
+from app.enum.user import SensitiveField
+
+CASE_INSENSITIVE_FIELDS = [SensitiveField.EMAIL]
 
 
-def get_request_id(request: Request) -> str | None:
-    return getattr(request.state, "request_id", None)
+def anonymize_sensitive_data(
+    data: str, field: SensitiveField | None = None, length: int = 12
+) -> str:
+    if not data:
+        return "none"
+
+    normalized = data
+    if field in CASE_INSENSITIVE_FIELDS:
+        normalized = data.lower()
+
+    secret_key = settings.logging_hmac_secret.get_secret_value()
+    hashed = hmac.new(
+        key=secret_key.encode(),
+        msg=normalized.encode(),
+        digestmod=hashlib.sha256,
+    ).hexdigest()
+
+    return hashed[:length]

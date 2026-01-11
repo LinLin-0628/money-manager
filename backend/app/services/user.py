@@ -1,31 +1,33 @@
 import logging
 
-from fastapi import Request
 from sqlalchemy.exc import IntegrityError
 
 from app.core.exceptions import UserAlreadyExists
 from app.core.security import hash_password
+from app.enum.user import SensitiveField
 from app.models import User
 from app.repositories.user import UserRepository
 from app.schemas.user import UserCreate
-from app.utils.utils import get_request_id
+from app.utils.utils import anonymize_sensitive_data
 
 logger = logging.getLogger(__name__)
 
 
 class UserService:
-    def __init__(self, user_repo: UserRepository, request: Request) -> None:
+    def __init__(self, user_repo: UserRepository) -> None:
         self.user_repo = user_repo
-        self.request = request
 
     def register_user(self, user_create_data: UserCreate) -> User:
-        request_id = get_request_id(self.request)
         logger.info(
             "Register user start",
             extra={
-                "request_id": request_id,
                 "user_create_data": {
-                    "name": user_create_data.name,
+                    "name": anonymize_sensitive_data(
+                        user_create_data.name, SensitiveField.NAME
+                    ),
+                    "email": anonymize_sensitive_data(
+                        user_create_data.email, SensitiveField.EMAIL
+                    ),
                 },
             },
         )
@@ -43,9 +45,13 @@ class UserService:
             logger.info(
                 "Register user complete",
                 extra={
-                    "request_id": request_id,
                     "user_create_data": {
-                        "name": user_create_data.name,
+                        "name": anonymize_sensitive_data(
+                            user_create_data.name, SensitiveField.NAME
+                        ),
+                        "email": anonymize_sensitive_data(
+                            user_create_data.email, SensitiveField.EMAIL
+                        ),
                     },
                 },
             )
@@ -57,11 +63,34 @@ class UserService:
             logger.warning(
                 "Register user failed - email already exists",
                 extra={
-                    "request_id": request_id,
                     "user_create_data": {
-                        "name": user_create_data.name,
+                        "name": anonymize_sensitive_data(
+                            user_create_data.name, SensitiveField.NAME
+                        ),
+                        "email": anonymize_sensitive_data(
+                            user_create_data.email, SensitiveField.EMAIL
+                        ),
                     },
                 },
             )
 
             raise UserAlreadyExists() from e
+
+    def get_user_by_email(self, email: str) -> User | None:
+        logger.info(
+            "Get user by email start",
+            extra={"email": anonymize_sensitive_data(email, SensitiveField.EMAIL)},
+        )
+
+        user = self.user_repo.get_user_by_email(email)
+
+        logger.info(
+            "Get user by email complete",
+            extra={
+                "email": anonymize_sensitive_data(email, SensitiveField.EMAIL),
+                "user_id": user.id if user else None,
+                "found": user is not None,
+            },
+        )
+
+        return user

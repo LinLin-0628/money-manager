@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.router import api_router
 from app.core.exception_handler import add_exception_handler
 from app.core.logging import setup_logging
-from app.core.middlewares import RequestLoggingMiddleware
+from app.core.middlewares import RequestIDGeneratorMiddleware, RequestLoggingMiddleware
 
 
 @asynccontextmanager
@@ -30,6 +30,7 @@ add_exception_handler(app)
 
 # Add middleware
 app.add_middleware(RequestLoggingMiddleware)
+app.add_middleware(RequestIDGeneratorMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
