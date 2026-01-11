@@ -32,7 +32,7 @@ class AuthService:
         self.auth_repo = auth_repo
         self.user_service = user_service
 
-    def login_user(self, email: str, password: str):
+    def login_user(self, email: str, password: str) -> TokenPair:
 
         logger.info("Login user start", extra={"email": anonymize_sensitive_data(email, SensitiveField.EMAIL)})
 
@@ -44,8 +44,6 @@ class AuthService:
             raise InvalidCredentials()
 
         try:
-
-
             refresh_token_family_id = generate_family_id()
             now = datetime.now(timezone.utc)
             access_token_expire = now + timedelta(

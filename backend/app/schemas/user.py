@@ -36,3 +36,9 @@ class UserRead(BaseModel):
 class UserLoginForm(BaseModel):
     email: Annotated[str, EmailStr]
     password: str
+
+    @field_validator("email")
+    @classmethod
+    def clean_email(cls, v: str) -> str:
+        v = v.strip().lower()
+        return v

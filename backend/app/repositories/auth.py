@@ -8,7 +8,7 @@ from app.models import RefreshToken, User
 
 class AuthRepository:
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         self.db = db
 
     def create_refresh_token(self, token: RefreshToken):
@@ -22,7 +22,7 @@ class AuthRepository:
         stmt = (
             update(RefreshToken)
             .where(RefreshToken.user_id == user_id)
-            .where(RefreshToken.revoked_at == None)  # Optional: only update tokens that aren't already revoked
+            .where(RefreshToken.revoked_at.is_(None))
             .values(revoked_at=now)
         )
         self.db.execute(stmt)

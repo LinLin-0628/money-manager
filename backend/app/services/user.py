@@ -84,7 +84,7 @@ class UserService:
         logger.info(
             "Get user by email complete",
             extra={
-                "email": anonymize_sensitive_data(user.email, SensitiveField.EMAIL),
+                "email": anonymize_sensitive_data(email, SensitiveField.EMAIL),
                 "user_id": user.id if user else None,
                 "found": user is not None,
             },

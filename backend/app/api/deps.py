@@ -8,7 +8,7 @@ from app.repositories.auth import AuthRepository
 from app.services.user import UserService
 from app.services.auth import AuthService
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/verify")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/login")
 
 
 def get_user_service(db: Session = Depends(get_db)) -> UserService:

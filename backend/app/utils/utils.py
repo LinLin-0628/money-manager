@@ -16,7 +16,7 @@ def anonymize_sensitive_data(
     if field in CASE_INSENSITIVE_FIELDS:
         normalized = data.lower()
 
-    secret_key = settings.logging_secret.get_secret_value()
+    secret_key = settings.logging_hmac_secret.get_secret_value()
     hashed = hmac.new(
         key=secret_key.encode(),
         msg=normalized.encode(),

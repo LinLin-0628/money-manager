@@ -18,8 +18,6 @@ class RequestIDGeneratorMiddleware(BaseHTTPMiddleware):
             response = await call_next(request)
             response.headers["X-Request-ID"] = request_id
             return response
-        except Exception:
-            raise
         finally:
             request_id_ctx_var.reset(token)
 

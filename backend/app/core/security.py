@@ -1,5 +1,6 @@
+import hmac
+import hashlib
 from datetime import timezone, datetime, timedelta
-from uuid import UUID
 
 from passlib.context import CryptContext
 import uuid
@@ -19,19 +20,24 @@ def verify_password(password: str, hashed: str) -> bool:
 
 
 def hash_token(token: str) -> str:
-    return pwd_context.hash(token)
+    return hmac.new(
+        settings.refresh_token_hmac_secret.get_secret_value().encode(),
+        token.encode(),
+        hashlib.sha256
+    ).hexdigest()
 
 
 def verify_token(token: str, hashed: str) -> bool:
-    return pwd_context.verify(token, hashed)
+    actual_hash = hash_token(token)
+    return hmac.compare_digest(actual_hash, hashed)
 
 
-def generate_family_id() -> UUID:
+def generate_family_id() -> uuid.UUID:
     """Generate unique family ID for token rotation chain"""
     return uuid.uuid4()
 
 
-def generate_access_token(user_id: UUID, iat: datetime, exp: datetime):
+def generate_access_token(user_id: uuid.UUID, iat: datetime, exp: datetime):
     payload = {
         "sub": str(user_id),
         "type": "access",
@@ -47,7 +53,7 @@ def generate_access_token(user_id: UUID, iat: datetime, exp: datetime):
 
 
 def generate_refresh_token(
-    user_id: UUID, family_id: UUID, iat: datetime, exp: datetime
+    user_id: uuid.UUID, family_id: uuid.UUID, iat: datetime, exp: datetime
 ):
     payload = {
         "sub": str(user_id),
