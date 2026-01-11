@@ -1,10 +1,11 @@
 import logging
+from http import HTTPStatus
 
 from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
 
 from app.core.exceptions import AppException
-from app.utils.utils import get_request_id
+from app.core.middlewares import get_log_level
 
 logger = logging.getLogger(__name__)
 
@@ -14,10 +15,41 @@ def add_exception_handler(app: FastAPI):
     async def app_exception_handler(
         request: Request, exc: AppException
     ) -> JSONResponse:
-        logger.warning(
+
+        if exc.status_code >= status.HTTP_500_INTERNAL_SERVER_ERROR:
+            logger.error(
+                f"App Server Error - {exc.__class__.__name__}: {exc.message}",
+                extra={
+                    "status_code": exc.status_code,
+                    "details": getattr(exc, "details", None),
+                    "method": request.method,
+                    "path": request.url.path,
+                },
+                exc_info=True,
+            )
+
+
+            return JSONResponse(
+            status_code=exc.status_code,
+            content={
+                "error": {
+                    "message": "Internal Server Error",
+                    "details": None,
+                },
+            },
+        )
+
+        try:
+            http_status = HTTPStatus(exc.status_code)
+        except ValueError:
+            http_status = exc.status_code
+
+        log_level = get_log_level(http_status)
+
+        logger.log(
+            log_level,
             f"{exc.__class__.__name__}: {exc.message}",
             extra={
-                "request_id": get_request_id(request),
                 "status_code": exc.status_code,
                 "details": getattr(exc, "details", None),
                 "method": request.method,
@@ -28,7 +60,6 @@ def add_exception_handler(app: FastAPI):
         return JSONResponse(
             status_code=exc.status_code,
             content={
-                "request_id": get_request_id(request),
                 "error": {
                     "message": exc.message,
                     "details": getattr(exc, "details", None),
@@ -42,11 +73,9 @@ def add_exception_handler(app: FastAPI):
     ) -> JSONResponse:
         status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
 
-        logger.error(
+        logger.exception(
             "Unhandled exception",
-            exc_info=True,
             extra={
-                "request_id": get_request_id(request),
                 "status_code": status_code,
                 "method": request.method,
                 "path": request.url.path,
@@ -56,7 +85,6 @@ def add_exception_handler(app: FastAPI):
         return JSONResponse(
             status_code=status_code,
             content={
-                "request_id": get_request_id(request),
                 "error": {"message": "Internal Server Error"},
             },
         )

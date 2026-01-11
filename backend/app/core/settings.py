@@ -23,6 +23,9 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 30
     refresh_token_expire_days: int = 7
 
+    # Logging
+    logging_secret: SecretStr
+
     @property
     def database_url(self) -> str:
         return (
