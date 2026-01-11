@@ -1,10 +1,10 @@
-import hmac
 import hashlib
-from datetime import timezone, datetime, timedelta
-
-from passlib.context import CryptContext
+import hmac
 import uuid
+from datetime import datetime
+
 from jose import JWTError, jwt
+from passlib.context import CryptContext
 
 from app.core.settings import settings
 
@@ -23,7 +23,7 @@ def hash_token(token: str) -> str:
     return hmac.new(
         settings.refresh_token_hmac_secret.get_secret_value().encode(),
         token.encode(),
-        hashlib.sha256
+        hashlib.sha256,
     ).hexdigest()
 
 

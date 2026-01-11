@@ -1,23 +1,20 @@
-from uuid import UUID
+import logging
+from datetime import datetime, timedelta, timezone
 
 from app.core.exceptions import AppException, InvalidCredentials, UserNotFound
 from app.core.security import (
-    verify_password,
-    generate_family_id,
     generate_access_token,
+    generate_family_id,
     generate_refresh_token,
     hash_token,
+    verify_password,
 )
+from app.core.settings import settings
 from app.enum.user import SensitiveField
 from app.models import RefreshToken
 from app.repositories.auth import AuthRepository
-from datetime import timezone, datetime, timedelta
-from app.core.settings import settings
 from app.schemas.auth import TokenPair
-
 from app.services.user import UserService
-import logging
-
 from app.utils.utils import anonymize_sensitive_data
 
 logger = logging.getLogger(__name__)
@@ -33,8 +30,10 @@ class AuthService:
         self.user_service = user_service
 
     def login_user(self, email: str, password: str) -> TokenPair:
-
-        logger.info("Login user start", extra={"email": anonymize_sensitive_data(email, SensitiveField.EMAIL)})
+        logger.info(
+            "Login user start",
+            extra={"email": anonymize_sensitive_data(email, SensitiveField.EMAIL)},
+        )
 
         user = self.user_service.get_user_by_email(email)
         if not user:
@@ -76,13 +75,18 @@ class AuthService:
 
             self.auth_repo.db.commit()
 
-            logger.info("Login user complete", extra={"email": anonymize_sensitive_data(email, SensitiveField.EMAIL), "logged_in": True} )
+            logger.info(
+                "Login user complete",
+                extra={
+                    "email": anonymize_sensitive_data(email, SensitiveField.EMAIL),
+                    "logged_in": True,
+                },
+            )
 
             return TokenPair(
                 access_token=access_token,
                 refresh_token=refresh_token,
             )
-
 
         except Exception as e:
             self.auth_repo.db.rollback()

@@ -5,8 +5,8 @@ from pathlib import Path
 
 from pythonjsonlogger.json import JsonFormatter
 
-from app.core.settings import settings
 from app.core.logging_context import request_id_ctx_var
+from app.core.settings import settings
 
 LOG_DIR = Path("logs")
 LOG_FILE = LOG_DIR / "app.log"
@@ -14,6 +14,7 @@ LOG_FILE = LOG_DIR / "app.log"
 
 class UTCJsonFormatter(JsonFormatter):
     """JSON formatter that uses UTC time"""
+
     converter = time.gmtime
 
 

@@ -5,9 +5,11 @@ from http import HTTPStatus
 
 from fastapi import Request, status
 from starlette.middleware.base import BaseHTTPMiddleware
+
 from app.core.logging_context import request_id_ctx_var
 
 logger = logging.getLogger(__name__)
+
 
 class RequestIDGeneratorMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
@@ -20,6 +22,7 @@ class RequestIDGeneratorMiddleware(BaseHTTPMiddleware):
             return response
         finally:
             request_id_ctx_var.reset(token)
+
 
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
