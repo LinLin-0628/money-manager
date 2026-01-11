@@ -5,21 +5,31 @@ from http import HTTPStatus
 
 from fastapi import Request, status
 from starlette.middleware.base import BaseHTTPMiddleware
+from app.core.logging_context import request_id_ctx_var
 
 logger = logging.getLogger(__name__)
 
+class RequestIDGeneratorMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        request_id = request.headers.get("X-Request-ID", str(uuid.uuid4()))
+        request.state.request_id = request_id
+        token = request_id_ctx_var.set(request_id)
+        try:
+            response = await call_next(request)
+            response.headers["X-Request-ID"] = request_id
+            return response
+        except Exception:
+            raise
+        finally:
+            request_id_ctx_var.reset(token)
 
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         start_time = time.time()
 
-        request_id = str(uuid.uuid4())
-        request.state.request_id = request_id
-
         logger.info(
             "Request started",
             extra={
-                "request_id": request_id,
                 "method": request.method,
                 "path": request.url.path,
             },
@@ -30,11 +40,9 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         except Exception:
             duration_ms = round((time.time() - start_time) * 1000, 2)
 
-            logger.error(
+            logger.exception(
                 "Unhandled exception during request",
-                exc_info=True,
                 extra={
-                    "request_id": request_id,
                     "method": request.method,
                     "path": request.url.path,
                     "status": status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -49,13 +57,10 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         level = get_log_level(http_status)
         message = f"Request completed ({http_status.value} {http_status.phrase})"
 
-        response.headers["X-Request-ID"] = request_id
-
         logger.log(
             level,
             message,
             extra={
-                "request_id": request_id,
                 "method": request.method,
                 "path": request.url.path,
                 "status_code": http_status.value,
