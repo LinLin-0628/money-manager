@@ -15,6 +15,28 @@ def add_exception_handler(app: FastAPI) -> None:
     async def app_exception_handler(
         request: Request, exc: AppException
     ) -> JSONResponse:
+        if exc.status_code == status.HTTP_401_UNAUTHORIZED:
+            logger.info(
+                f"Unauthorized Access - {exc.__class__.__name__}: {exc.message}",
+                extra={
+                    "status_code": exc.status_code,
+                    "details": getattr(exc, "details", None),
+                    "method": request.method,
+                    "path": request.url.path,
+                },
+            )
+
+            return JSONResponse(
+                status_code=exc.status_code,
+                content={
+                    "error": {
+                        "message": "Unauthorized",
+                        "details": getattr(exc, "details", None),
+                    },
+                },
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
         if exc.status_code >= status.HTTP_500_INTERNAL_SERVER_ERROR:
             logger.error(
                 f"App Server Error - {exc.__class__.__name__}: {exc.message}",

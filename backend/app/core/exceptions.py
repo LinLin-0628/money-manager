@@ -25,16 +25,6 @@ class InvalidCredentials(AppException):
     message = "Invalid email or password"
 
 
-class AccessTokenExpired(AppException):
-    status_code = status.HTTP_401_UNAUTHORIZED
-    message = "Access token has expired"
-
-
-class RefreshTokenExpired(AppException):
-    status_code = status.HTTP_401_UNAUTHORIZED
-    message = "Refresh token has expired"
-
-
 class RefreshTokenRevoked(AppException):
     status_code = status.HTTP_401_UNAUTHORIZED
     message = "Refresh token has been revoked"
@@ -48,3 +38,30 @@ class RefreshTokenReuseDetected(AppException):
 class UserNotFound(AppException):
     status_code = status.HTTP_404_NOT_FOUND
     message = "User not found"
+
+
+class MalformedTokenError(AppException):
+    status_code = status.HTTP_401_UNAUTHORIZED
+    message = "Malformed token"
+
+
+class InvalidTokenSignature(AppException):
+    status_code = status.HTTP_401_UNAUTHORIZED
+    message = "Invalid token signature"
+
+
+class InvalidAccessTokenSignature(MalformedTokenError):
+    message = "Invalid access token signature"
+
+
+class TokenExpired(AppException):
+    status_code = status.HTTP_401_UNAUTHORIZED
+    message = "Token has expired"
+
+
+class AccessTokenExpired(TokenExpired):
+    message = "Access token has expired"
+
+
+class RefreshTokenExpired(TokenExpired):
+    message = "Refresh token has expired"
