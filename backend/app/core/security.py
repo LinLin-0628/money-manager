@@ -72,7 +72,7 @@ def generate_refresh_token(
     )
 
 
-def _decode_token(token: str, secret: str) -> dict[str, Any] | None:
+def _decode_token(token: str, secret: str) -> dict[str, Any]:
     try:
         return jwt.decode(
             token,
@@ -93,11 +93,11 @@ def _decode_token(token: str, secret: str) -> dict[str, Any] | None:
             raise MalformedTokenError() from e
 
 
-def decode_access_token(access_token: str) -> dict[str, Any] | None:
+def decode_access_token(access_token: str) -> dict[str, Any]:
     secret = settings.access_token_secret.get_secret_value()
     return _decode_token(access_token, secret)
 
 
-def decode_refresh_token(refresh_token: str) -> dict[str, Any] | None:
+def decode_refresh_token(refresh_token: str) -> dict[str, Any]:
     secret = settings.refresh_token_secret.get_secret_value()
     return _decode_token(refresh_token, secret)

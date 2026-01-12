@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from fastapi import Depends
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
@@ -53,6 +55,9 @@ def get_current_user(
         raise MalformedTokenError("Token is not access token")
 
     user_id = payload.get("sub")
+    if not isinstance(user_id, (str, UUID)):
+        raise MalformedTokenError("Token subject is missing or invalid")
+
     user = user_service.get_user_by_id(user_id)
 
     if not user:
