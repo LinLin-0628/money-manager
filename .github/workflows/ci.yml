@@ -1,0 +1,44 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches:
+      - main         # triggers on any push to main
+      - '**'         # triggers on push to any branch
+  pull_request:
+
+jobs:
+
+  backend-lint:
+    name: Backend – Lint & Type Check
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: "Set up Python"
+        uses: actions/setup-python@v6
+        with:
+          python-version-file: "backend/pyproject.toml"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - name: Install the project dependencies
+        run: uv sync --all-groups
+
+      - name: Run Mypy
+        run: uv run mypy .
+
+      - name: Linting (Ruff)
+        run: uv run ruff check .
+
+      - name: Formatting (Ruff)
+        run: uv run ruff format . --check --diff

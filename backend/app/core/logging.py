@@ -15,11 +15,11 @@ LOG_FILE = LOG_DIR / "app.log"
 class UTCJsonFormatter(JsonFormatter):
     """JSON formatter that uses UTC time"""
 
-    converter = time.gmtime
+    converter = time.gmtime  # type: ignore[assignment]
 
 
 class RequestIDFilter(logging.Filter):
-    def filter(self, record):
+    def filter(self, record: logging.LogRecord) -> bool:
         record.request_id = request_id_ctx_var.get()
         return True
 
@@ -65,6 +65,6 @@ LOGGING_CONFIG = {
 }
 
 
-def setup_logging():
+def setup_logging() -> None:
     LOG_DIR.mkdir(exist_ok=True)
     logging.config.dictConfig(LOGGING_CONFIG)

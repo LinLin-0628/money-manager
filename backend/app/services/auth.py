@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from app.core.exceptions import AppException, InvalidCredentials, UserNotFound
 from app.core.security import (
@@ -44,7 +44,7 @@ class AuthService:
 
         try:
             refresh_token_family_id = generate_family_id()
-            now = datetime.now(timezone.utc)
+            now = datetime.now(UTC)
             access_token_expire = now + timedelta(
                 minutes=settings.access_token_expire_minutes
             )

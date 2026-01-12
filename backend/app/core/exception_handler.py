@@ -10,7 +10,7 @@ from app.core.middlewares import get_log_level
 logger = logging.getLogger(__name__)
 
 
-def add_exception_handler(app: FastAPI):
+def add_exception_handler(app: FastAPI) -> None:
     @app.exception_handler(AppException)
     async def app_exception_handler(
         request: Request, exc: AppException
@@ -37,10 +37,7 @@ def add_exception_handler(app: FastAPI):
                 },
             )
 
-        try:
-            http_status = HTTPStatus(exc.status_code)
-        except ValueError:
-            http_status = exc.status_code
+        http_status = HTTPStatus(exc.status_code)
 
         log_level = get_log_level(http_status)
 

@@ -19,7 +19,7 @@ def login(
     response: Response,
     form_data: OAuth2PasswordRequestForm = Depends(),
     auth_service: AuthService = Depends(get_auth_service),
-):
+) -> AccessToken:
     login_credentials = UserLoginForm(
         email=form_data.username, password=form_data.password
     )

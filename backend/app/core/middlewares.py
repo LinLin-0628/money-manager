@@ -1,9 +1,10 @@
 import logging
 import time
 import uuid
+from collections.abc import Awaitable, Callable
 from http import HTTPStatus
 
-from fastapi import Request, status
+from fastapi import Request, Response, status
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.core.logging_context import request_id_ctx_var
@@ -12,7 +13,11 @@ logger = logging.getLogger(__name__)
 
 
 class RequestIDGeneratorMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next):
+    async def dispatch(
+        self,
+        request: Request,
+        call_next: Callable[[Request], Awaitable[Response]],
+    ) -> Response:
         request_id = request.headers.get("X-Request-ID", str(uuid.uuid4()))
         request.state.request_id = request_id
         token = request_id_ctx_var.set(request_id)
@@ -25,7 +30,11 @@ class RequestIDGeneratorMiddleware(BaseHTTPMiddleware):
 
 
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next):
+    async def dispatch(
+        self,
+        request: Request,
+        call_next: Callable[[Request], Awaitable[Response]],
+    ) -> Response:
         start_time = time.time()
 
         logger.info(
