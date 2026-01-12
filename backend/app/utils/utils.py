@@ -1,5 +1,6 @@
 import hashlib
 import hmac
+import uuid
 
 from app.core.settings import settings
 from app.enum.user import SensitiveField
@@ -25,3 +26,9 @@ def anonymize_sensitive_data(
     ).hexdigest()
 
     return hashed[:length]
+
+
+def ensure_uuid(val: str | uuid.UUID) -> uuid.UUID:
+    if isinstance(val, uuid.UUID):
+        return val
+    return uuid.UUID(val)

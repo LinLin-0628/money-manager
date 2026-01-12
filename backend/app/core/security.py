@@ -4,9 +4,10 @@ import uuid
 from datetime import datetime
 from typing import Any
 
-from jose import JWTError, jwt
+from jose import ExpiredSignatureError, JWTError, jwt
 from passlib.context import CryptContext
 
+from app.core.exceptions import InvalidTokenSignature, MalformedTokenError, TokenExpired
 from app.core.settings import settings
 
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
@@ -73,14 +74,23 @@ def generate_refresh_token(
 
 def _decode_token(token: str, secret: str) -> dict[str, Any] | None:
     try:
-        payload = jwt.decode(
+        return jwt.decode(
             token,
             secret,
             algorithms=[settings.algorithm],
+            options={"require_sub": True, "require_iat": True, "require_exp": True},
         )
-        return payload
-    except JWTError:
-        return None
+    except ExpiredSignatureError as e:
+        raise TokenExpired() from e
+
+    except JWTError as e:
+        msg = str(e)
+        if "Signature verification failed" in msg:
+            raise InvalidTokenSignature() from e
+        elif "missing required key" in msg:
+            raise MalformedTokenError(msg) from e
+        else:
+            raise MalformedTokenError() from e
 
 
 def decode_access_token(access_token: str) -> dict[str, Any] | None:
