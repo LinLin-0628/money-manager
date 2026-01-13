@@ -51,12 +51,17 @@ class AuthService:
             refresh_token_expire = now + timedelta(
                 days=settings.refresh_token_expire_days
             )
+            family_expires_at = refresh_token_expire
 
             access_token = generate_access_token(
                 user.id, iat=now, exp=access_token_expire
             )
             refresh_token = generate_refresh_token(
-                user.id, refresh_token_family_id, iat=now, exp=refresh_token_expire
+                user.id,
+                refresh_token_family_id,
+                iat=now,
+                exp=refresh_token_expire,
+                family_expires_at=family_expires_at,
             )
 
             refresh_token_hash = hash_token(refresh_token)
@@ -70,6 +75,7 @@ class AuthService:
                     family_id=refresh_token_family_id,
                     expires_at=refresh_token_expire,
                     created_at=now,
+                    family_expires_at=family_expires_at,
                 )
             )
 
@@ -90,5 +96,10 @@ class AuthService:
 
         except Exception as e:
             self.auth_repo.db.rollback()
-            logger.exception("Login failed")
+            logger.exception(
+                "Login failed",
+                extra={
+                    "detail": str(e),
+                },
+            )
             raise AppException() from e

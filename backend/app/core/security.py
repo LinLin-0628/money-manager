@@ -55,7 +55,11 @@ def generate_access_token(user_id: uuid.UUID, iat: datetime, exp: datetime) -> s
 
 
 def generate_refresh_token(
-    user_id: uuid.UUID, family_id: uuid.UUID, iat: datetime, exp: datetime
+    user_id: uuid.UUID,
+    family_id: uuid.UUID,
+    iat: datetime,
+    exp: datetime,
+    family_expires_at: datetime,
 ) -> str:
     payload = {
         "sub": str(user_id),
@@ -63,6 +67,7 @@ def generate_refresh_token(
         "family_id": str(family_id),
         "iat": int(iat.timestamp()),
         "exp": int(exp.timestamp()),
+        "family_expires_at": int(family_expires_at.timestamp()),
     }
 
     return jwt.encode(
