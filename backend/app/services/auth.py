@@ -118,42 +118,46 @@ class AuthService:
             raise AppException() from e
 
     def refresh_tokens(self, refresh_token: str) -> TokenPair:
-        # verify the refresh token
-        # - verify signature, exp
-        # - check in db
-        #   - token hash exist
-        #   - revoked_at = null
-
-        # if not found --> 401 --> logout
-        # FOUND --> generate new tokens pair
-        # for the refresh token in db, replace with new info
-
         logger.info("Refresh tokens start")
 
         try:
             refresh_token_payload = decode_refresh_token(refresh_token)
         except TokenExpired as e:
-            raise RefreshTokenExpired() from e
+            raise RefreshTokenExpired(
+                "Refresh token expired",
+                details={"code": "refresh_token_expired", "logout": True},
+            ) from e
         except MalformedTokenError as e:
-            raise MalformedRefreshTokenError() from e
+            raise MalformedRefreshTokenError(
+                details={"code": "malformed_refresh_token", "logout": True}
+            ) from e
         except InvalidTokenSignature as e:
-            raise InvalidRefreshTokenSignature() from e
+            raise InvalidRefreshTokenSignature(
+                details={"code": "invalid_refresh_token_signature", "logout": True}
+            ) from e
 
         if refresh_token_payload.get("type") != "refresh":
-            raise MalformedRefreshTokenError("Token is not refresh token")
+            raise MalformedRefreshTokenError(
+                "Token is not refresh token",
+                details={"code": "malformed_refresh_token", "logout": True},
+            )
 
         # family_id -> UUID
         family_id_raw = refresh_token_payload.get("family_id")
         if isinstance(family_id_raw, (str, UUID)):
             family_id = ensure_uuid(family_id_raw)
         else:
-            raise MalformedTokenError("Refresh token family_id is missing")
+            raise MalformedTokenError(
+                "Refresh token family_id is missing",
+                details={"code": "malformed_refresh_token", "logout": True},
+            )
 
         # family_expires_at -> numeric timestamp -> datetime
         family_expires_at_ts = refresh_token_payload.get("family_expires_at")
         if not isinstance(family_expires_at_ts, (int, float)):
             raise MalformedTokenError(
-                "Refresh token family_expires_at is missing or invalid"
+                "Refresh token family_expires_at is missing or invalid",
+                details={"code": "malformed_refresh_token", "logout": True},
             )
         family_expires_at = datetime.fromtimestamp(float(family_expires_at_ts), tz=UTC)
 
@@ -162,16 +166,25 @@ class AuthService:
         if isinstance(user_id_raw, (str, UUID)):
             user_id = ensure_uuid(user_id_raw)
         else:
-            raise MalformedTokenError("Token subject is missing or invalid")
+            raise MalformedTokenError(
+                "Token subject is missing or invalid",
+                details={"code": "malformed_refresh_token", "logout": True},
+            )
 
         # Check in db
         token_in_db = self.get_token(refresh_token)
 
         if not token_in_db:
-            raise InvalidRefreshToken("Refresh token hash not found in database")
+            raise InvalidRefreshToken(
+                "Refresh token hash not found in database",
+                details={"code": "invalid_refresh_token", "logout": True},
+            )
 
         if token_in_db.revoked_at is not None:
-            raise InvalidRefreshToken("Refresh token already revoked")
+            raise InvalidRefreshToken(
+                "Refresh token already revoked",
+                details={"code": "invalid_refresh_token", "logout": True},
+            )
 
         now = get_current_time()
 
@@ -241,7 +254,7 @@ class AuthService:
                     "family_id": str(family_id),
                 },
             )
-            raise AppException() from e
+            raise AppException(details={"code": "app_exception", "logout": True}) from e
 
     def _revoke_token(self, refresh_token_id: int) -> None:
         now = get_current_time()
@@ -253,19 +266,22 @@ class AuthService:
     def logout_user(self, refresh_token: str) -> None:
         logger.info("Logout user start")
 
-        # Best-effort decode refresh token
         try:
             payload = decode_refresh_token(refresh_token)
         except (TokenExpired, MalformedTokenError, InvalidTokenSignature) as e:
-            # Token invalid or expired — force logout
-            raise InvalidRefreshToken() from e
+            raise InvalidRefreshToken(
+                details={"code": "invalid_refresh_token", "logout": True},
+            ) from e
 
         # subject -> UUID
         user_id_raw = payload.get("sub")
         if isinstance(user_id_raw, (str, UUID)):
             user_id = ensure_uuid(user_id_raw)
         else:
-            raise MalformedRefreshTokenError("Token subject is missing or invalid")
+            raise MalformedRefreshTokenError(
+                "Token subject is missing or invalid",
+                details={"code": "malformed_refresh_token", "logout": True},
+            )
 
         now = get_current_time()
 
@@ -287,4 +303,6 @@ class AuthService:
                 "Logout failed",
                 extra={"detail": str(e)},
             )
-            raise AppException() from e
+            raise AppException(
+                details={"code": "invalid_refresh_token", "logout": True},
+            ) from e
