@@ -7,6 +7,6 @@ reviews:
   auto_review:
     drafts: true
     enabled: true
-    base_branches: [ ".*" ]
+    base_branches: [".*"]
 chat:
   auto_reply: true

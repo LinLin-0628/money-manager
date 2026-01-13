@@ -140,7 +140,7 @@ class AuthService:
             raise InvalidRefreshTokenSignature() from e
 
         if refresh_token_payload.get("type") != "refresh":
-            raise MalformedTokenError("Token is not refresh token")
+            raise MalformedRefreshTokenError("Token is not refresh token")
 
         # family_id -> UUID
         family_id_raw = refresh_token_payload.get("family_id")
@@ -257,7 +257,7 @@ class AuthService:
         try:
             payload = decode_refresh_token(refresh_token)
         except (TokenExpired, MalformedTokenError, InvalidTokenSignature) as e:
-            # Token invalid or expired — still allow logout
+            # Token invalid or expired — force logout
             raise InvalidRefreshToken() from e
 
         # subject -> UUID
@@ -265,7 +265,7 @@ class AuthService:
         if isinstance(user_id_raw, (str, UUID)):
             user_id = ensure_uuid(user_id_raw)
         else:
-            raise MalformedTokenError("Token subject is missing or invalid")
+            raise MalformedRefreshTokenError("Token subject is missing or invalid")
 
         now = get_current_time()
 

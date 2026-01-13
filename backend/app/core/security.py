@@ -52,7 +52,7 @@ def hash_token(token: str) -> str:
         token: Token string to be hashed
 
     Returns:
-
+        str: Hashed token string
     """
     return hmac.new(
         settings.refresh_token_hmac_secret.get_secret_value().encode(),
@@ -130,7 +130,7 @@ def generate_refresh_token(
         family_expires_at (datetime): Family expiration time
 
     Returns:
-        str: A JWT access token string (encoded)
+        str: A JWT refresh token string (encoded)
     """
 
     payload = {
@@ -158,7 +158,7 @@ def _decode_token(token: str, secret: str) -> dict[str, Any]:
         secret (str): Secret key used to verify the signature of the token
 
     Returns:
-        None
+        dict[str, Any]: Decoded token payload
 
     Raises:
         TokenExpired: If the token has expired
@@ -194,7 +194,7 @@ def decode_access_token(access_token: str) -> dict[str, Any]:
         access_token (str): Access token string to be decoded
 
     Returns:
-        None
+        dict[str, Any]: Decoded token payload
     """
     secret = settings.access_token_secret.get_secret_value()
     return _decode_token(access_token, secret)
@@ -208,7 +208,7 @@ def decode_refresh_token(refresh_token: str) -> dict[str, Any]:
         refresh_token (str): Refresh token string to be decoded
 
     Returns:
-        None
+        dict[str, Any]: Decoded token payload
     """
     secret = settings.refresh_token_secret.get_secret_value()
     return _decode_token(refresh_token, secret)

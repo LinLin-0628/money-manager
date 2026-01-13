@@ -57,7 +57,7 @@ def get_current_user(
         raise InvalidAccessTokenSignature() from e
 
     if payload.get("type") != "access":
-        raise MalformedTokenError("Token is not access token")
+        raise InvalidAccessTokenSignature("Token is not access token")
 
     user_id_raw = payload.get("sub")
     if isinstance(user_id_raw, (str, UUID)):
