@@ -38,7 +38,10 @@ LOGGING_CONFIG = {
             "fmt": "%(asctime)s %(levelname)s %(request_id)s %(name)s %(message)s",
         },
         "console": {
-            "format": "%(asctime)s - %(levelname)s - [%(request_id)s] - %(name)s - %(message)s",  # noqa: E501
+            "format": (
+                "%(asctime)s - %(levelname)s - [%(request_id)s] "
+                "- %(name)s - %(message)s"
+            ),
         },
     },
     "handlers": {
