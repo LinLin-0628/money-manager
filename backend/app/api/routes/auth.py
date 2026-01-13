@@ -4,6 +4,7 @@ from fastapi import APIRouter, Cookie, Depends, Response, status
 from fastapi.security import OAuth2PasswordRequestForm
 
 from app.api.deps import get_auth_service
+from app.core.exceptions import InvalidRefreshToken
 from app.core.settings import settings
 from app.schemas.auth import AccessToken
 from app.schemas.user import UserLoginForm
@@ -44,7 +45,10 @@ def refresh_tokens(
     response: Response,
     refresh_token: str | None = Cookie(default=None),
     auth_service: AuthService = Depends(get_auth_service),
-):
+) -> AccessToken:
+    if not refresh_token:
+        raise InvalidRefreshToken("RefreshToken cookie is missing")
+
     tokens = auth_service.refresh_tokens(refresh_token)
 
     response.set_cookie(

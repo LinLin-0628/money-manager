@@ -26,7 +26,7 @@ from app.models import RefreshToken
 from app.repositories.auth import AuthRepository
 from app.schemas.auth import TokenPair
 from app.services.user import UserService
-from app.utils.utils import anonymize_sensitive_data
+from app.utils.utils import anonymize_sensitive_data, ensure_uuid
 
 logger = logging.getLogger(__name__)
 
@@ -140,18 +140,29 @@ class AuthService:
         if refresh_token_payload.get("type") != "refresh":
             raise MalformedTokenError("Token is not refresh token")
 
-        if not refresh_token_payload.get("family_id"):
+        # family_id -> UUID
+        family_id_raw = refresh_token_payload.get("family_id")
+        if isinstance(family_id_raw, (str, UUID)):
+            family_id = ensure_uuid(family_id_raw)
+        else:
             raise MalformedTokenError("Refresh token family_id is missing")
 
-        if not refresh_token_payload.get("family_expires_at"):
-            raise MalformedTokenError("Refresh token family_expires_at is missing")
+        # family_expires_at -> numeric timestamp -> datetime
+        family_expires_at_ts = refresh_token_payload.get("family_expires_at")
+        if not isinstance(family_expires_at_ts, (int, float)):
+            raise MalformedTokenError(
+                "Refresh token family_expires_at is missing or invalid"
+            )
+        family_expires_at = datetime.fromtimestamp(float(family_expires_at_ts), tz=UTC)
 
-        user_id = refresh_token_payload.get("sub")
-        if not isinstance(user_id, (str, UUID)):
+        # subject -> UUID
+        user_id_raw = refresh_token_payload.get("sub")
+        if isinstance(user_id_raw, (str, UUID)):
+            user_id = ensure_uuid(user_id_raw)
+        else:
             raise MalformedTokenError("Token subject is missing or invalid")
 
         # Check in db
-
         token_in_db = self.auth_repo.get_refresh_token_by_hash(
             hash_token(refresh_token)
         )
@@ -161,14 +172,9 @@ class AuthService:
         if token_in_db.family_expires_at < datetime.now(UTC):
             raise RefreshTokenExpired()
 
-        # If token found, recreate access token and refresh token
-        family_id = refresh_token_payload.get("family_id")
         now = datetime.now(UTC)
         access_token_expire = now + timedelta(
             minutes=settings.access_token_expire_minutes
-        )
-        family_expires_at = datetime.fromtimestamp(
-            refresh_token_payload.get("family_expires_at"), tz=UTC
         )
         refresh_token_expire = min(
             (now + timedelta(days=settings.refresh_token_expire_days)),
