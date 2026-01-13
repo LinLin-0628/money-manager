@@ -3,7 +3,7 @@ import uuid
 
 from sqlalchemy.exc import IntegrityError
 
-from app.core.exceptions import UserAlreadyExists
+from app.core.exceptions.user import UserAlreadyExists
 from app.core.security import hash_password
 from app.enum.user import SensitiveField
 from app.models import User

@@ -1,4 +1,4 @@
-from datetime import UTC, datetime
+from datetime import datetime
 from uuid import UUID
 
 from sqlalchemy import select, update
@@ -17,8 +17,7 @@ class AuthRepository:
         self.db.refresh(token)
         return token
 
-    def revoke_all_refresh_tokens(self, user_id: UUID) -> None:
-        now = datetime.now(UTC)
+    def revoke_all_refresh_tokens(self, user_id: UUID, now: datetime) -> None:
         stmt = (
             update(RefreshToken)
             .where(RefreshToken.user_id == user_id)

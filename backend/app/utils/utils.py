@@ -1,6 +1,7 @@
 import hashlib
 import hmac
 import uuid
+from datetime import UTC, datetime
 
 from app.core.settings import settings
 from app.enum.user import SensitiveField
@@ -32,3 +33,7 @@ def ensure_uuid(val: str | uuid.UUID) -> uuid.UUID:
     if isinstance(val, uuid.UUID):
         return val
     return uuid.UUID(val)
+
+
+def get_current_time() -> datetime:
+    return datetime.now(UTC).replace(microsecond=0)
