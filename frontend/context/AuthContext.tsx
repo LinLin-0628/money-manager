@@ -1,8 +1,14 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
-import api from '@/lib/api';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useRef,
+} from "react";
+import { useRouter } from "next/navigation";
+import api from "@/lib/api";
 
 interface AuthContextType {
   accessToken: string | null;
@@ -23,7 +29,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const logout = () => {
     setAccessToken(null);
-    router.push('/login');
+    router.push("/login");
   };
 
   // 1. SESSION RESTORATION (The "Silent Refresh")
@@ -35,7 +41,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       try {
         // IMPORTANT: Ensure your axios instance has { withCredentials: true }
         // This is what forces the browser to send the HttpOnly refresh_token cookie
-        const { data } = await api.post('/api/auth/refresh', {}, { withCredentials: true });
+        const { data } = await api.post(
+          "/api/auth/refresh",
+          {},
+          { withCredentials: true },
+        );
 
         if (data.access_token) {
           setAccessToken(data.access_token);
@@ -75,7 +85,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (isExpired && !originalRequest._retry) {
           originalRequest._retry = true;
           try {
-            const { data } = await api.post('/api/auth/refresh', {}, { withCredentials: true });
+            const { data } = await api.post(
+              "/api/auth/refresh",
+              {},
+              { withCredentials: true },
+            );
             const newAccessToken = data.access_token;
 
             setAccessToken(newAccessToken);
@@ -94,7 +108,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
 
         return Promise.reject(error);
-      }
+      },
     );
 
     return () => {
@@ -104,7 +118,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, [accessToken]);
 
   return (
-    <AuthContext.Provider value={{ accessToken, setAccessToken, logout, isLoading }}>
+    <AuthContext.Provider
+      value={{ accessToken, setAccessToken, logout, isLoading }}
+    >
       {!isLoading ? (
         children
       ) : (

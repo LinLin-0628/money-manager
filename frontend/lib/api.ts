@@ -1,8 +1,8 @@
 // lib/axios.ts
-import axios from 'axios';
+import axios from "axios";
 
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000',
+  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000",
   withCredentials: true, // Crucial for sending/receiving refresh token cookies
 });
 
@@ -17,7 +17,11 @@ const processQueue = (error: any, token: string | null = null) => {
   failedQueue = [];
 };
 
-export const setupInterceptors = (accessToken: string | null, setAccessToken: any, logout: any) => {
+export const setupInterceptors = (
+  accessToken: string | null,
+  setAccessToken: any,
+  logout: any,
+) => {
   // Request Interceptor: Attach Access Token
   const reqInterceptor = api.interceptors.request.use(
     (config) => {
@@ -26,7 +30,7 @@ export const setupInterceptors = (accessToken: string | null, setAccessToken: an
       }
       return config;
     },
-    (error) => Promise.reject(error)
+    (error) => Promise.reject(error),
   );
 
   // Response Interceptor: Handle Expiry and Refresh
@@ -36,7 +40,10 @@ export const setupInterceptors = (accessToken: string | null, setAccessToken: an
       const originalRequest = error.config;
 
       // Backend returns refresh: true when access token is invalid
-      if (error.response?.data?.details?.expired === true && !originalRequest._retry) {
+      if (
+        error.response?.data?.details?.expired === true &&
+        !originalRequest._retry
+      ) {
         if (isRefreshing) {
           return new Promise((resolve, reject) => {
             failedQueue.push({ resolve, reject });
@@ -56,7 +63,7 @@ export const setupInterceptors = (accessToken: string | null, setAccessToken: an
           const response = await axios.post(
             `${api.defaults.baseURL}/api/auth/refresh`,
             {},
-            { withCredentials: true }
+            { withCredentials: true },
           );
 
           const { access_token } = response.data;
@@ -81,7 +88,7 @@ export const setupInterceptors = (accessToken: string | null, setAccessToken: an
       }
 
       return Promise.reject(error);
-    }
+    },
   );
 
   return () => {
