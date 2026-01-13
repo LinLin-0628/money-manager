@@ -170,6 +170,7 @@ class AuthService:
             raise InvalidRefreshToken()
 
         if token_in_db.family_expires_at < datetime.now(UTC):
+            self._revoke_token(token_in_db.id)
             raise RefreshTokenExpired()
 
         now = datetime.now(UTC)
@@ -181,45 +182,58 @@ class AuthService:
             family_expires_at,
         )
 
-        access_token = generate_access_token(user_id, iat=now, exp=access_token_expire)
-        new_refresh_token = generate_refresh_token(
-            user_id,
-            family_id,
-            iat=now,
-            exp=refresh_token_expire,
-            family_expires_at=family_expires_at,
-        )
-
-        new_refresh_token_hash = hash_token(new_refresh_token)
-        # revoke the old token
-        self._revoke_token(token_in_db.id)
-
-        # Create new record for the new token
-        self.auth_repo.create_refresh_token(
-            RefreshToken(
-                token_hash=new_refresh_token_hash,
-                user_id=user_id,
-                family_id=family_id,
-                expires_at=refresh_token_expire,
-                created_at=now,
+        try:
+            access_token = generate_access_token(
+                user_id, iat=now, exp=access_token_expire
+            )
+            new_refresh_token = generate_refresh_token(
+                user_id,
+                family_id,
+                iat=now,
+                exp=refresh_token_expire,
                 family_expires_at=family_expires_at,
             )
-        )
 
-        self.auth_repo.db.commit()
+            new_refresh_token_hash = hash_token(new_refresh_token)
+            # revoke the old token
+            self._revoke_token(token_in_db.id)
 
-        logger.info(
-            "Login user complete",
-            extra={
-                "user_id": str(user_id),
-                "refreshed": True,
-            },
-        )
+            # Create new record for the new token
+            self.auth_repo.create_refresh_token(
+                RefreshToken(
+                    token_hash=new_refresh_token_hash,
+                    user_id=user_id,
+                    family_id=family_id,
+                    expires_at=refresh_token_expire,
+                    created_at=now,
+                    family_expires_at=family_expires_at,
+                )
+            )
 
-        return TokenPair(
-            access_token=access_token,
-            refresh_token=new_refresh_token,
-        )
+            self.auth_repo.db.commit()
+
+            logger.info(
+                "Refresh tokens complete",
+                extra={
+                    "user_id": str(user_id),
+                    "refreshed": True,
+                },
+            )
+
+            return TokenPair(
+                access_token=access_token,
+                refresh_token=new_refresh_token,
+            )
+        except Exception as e:
+            self.auth_repo.db.rollback()
+            logger.exception(
+                "Error while refreshing tokens",
+                extra={
+                    "user_id": str(user_id),
+                    "family_id": str(family_id),
+                },
+            )
+            raise AppException() from e
 
     def _revoke_token(self, refresh_token_id: int) -> None:
         now = datetime.now(UTC)

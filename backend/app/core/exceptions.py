@@ -50,7 +50,7 @@ class InvalidTokenSignature(AppException):
     message = "Invalid token signature"
 
 
-class InvalidAccessTokenSignature(MalformedTokenError):
+class InvalidAccessTokenSignature(InvalidTokenSignature):
     message = "Invalid access token signature"
 
 
