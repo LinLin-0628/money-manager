@@ -1,4 +1,5 @@
 import logging
+import uuid
 
 from sqlalchemy.exc import IntegrityError
 
@@ -8,7 +9,7 @@ from app.enum.user import SensitiveField
 from app.models import User
 from app.repositories.user import UserRepository
 from app.schemas.user import UserCreate
-from app.utils.utils import anonymize_sensitive_data
+from app.utils.utils import anonymize_sensitive_data, ensure_uuid
 
 logger = logging.getLogger(__name__)
 
@@ -89,6 +90,23 @@ class UserService:
             extra={
                 "email": anonymize_sensitive_data(email, SensitiveField.EMAIL),
                 "user_id": user.id if user else None,
+                "found": user is not None,
+            },
+        )
+
+        return user
+
+    def get_user_by_id(self, user_id: str | uuid.UUID) -> User | None:
+        logger.info(
+            "Get user by ID start",
+            extra={"user_id": str(user_id)},
+        )
+        user = self.user_repo.get_by_user_id(ensure_uuid(user_id))
+
+        logger.info(
+            "Get user by ID complete",
+            extra={
+                "user_id": str(user_id),
                 "found": user is not None,
             },
         )

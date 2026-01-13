@@ -4,9 +4,10 @@ import uuid
 from datetime import datetime
 from typing import Any
 
-from jose import JWTError, jwt
+from jose import ExpiredSignatureError, JWTError, jwt
 from passlib.context import CryptContext
 
+from app.core.exceptions import InvalidTokenSignature, MalformedTokenError, TokenExpired
 from app.core.settings import settings
 
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
@@ -54,7 +55,11 @@ def generate_access_token(user_id: uuid.UUID, iat: datetime, exp: datetime) -> s
 
 
 def generate_refresh_token(
-    user_id: uuid.UUID, family_id: uuid.UUID, iat: datetime, exp: datetime
+    user_id: uuid.UUID,
+    family_id: uuid.UUID,
+    iat: datetime,
+    exp: datetime,
+    family_expires_at: datetime,
 ) -> str:
     payload = {
         "sub": str(user_id),
@@ -62,6 +67,7 @@ def generate_refresh_token(
         "family_id": str(family_id),
         "iat": int(iat.timestamp()),
         "exp": int(exp.timestamp()),
+        "family_expires_at": int(family_expires_at.timestamp()),
     }
 
     return jwt.encode(
@@ -71,23 +77,32 @@ def generate_refresh_token(
     )
 
 
-def _decode_token(token: str, secret: str) -> dict[str, Any] | None:
+def _decode_token(token: str, secret: str) -> dict[str, Any]:
     try:
-        payload = jwt.decode(
+        return jwt.decode(
             token,
             secret,
             algorithms=[settings.algorithm],
+            options={"require_sub": True, "require_iat": True, "require_exp": True},
         )
-        return payload
-    except JWTError:
-        return None
+    except ExpiredSignatureError as e:
+        raise TokenExpired() from e
+
+    except JWTError as e:
+        msg = str(e)
+        if "Signature verification failed" in msg:
+            raise InvalidTokenSignature() from e
+        elif "missing required key" in msg:
+            raise MalformedTokenError(msg) from e
+        else:
+            raise MalformedTokenError() from e
 
 
-def decode_access_token(access_token: str) -> dict[str, Any] | None:
+def decode_access_token(access_token: str) -> dict[str, Any]:
     secret = settings.access_token_secret.get_secret_value()
     return _decode_token(access_token, secret)
 
 
-def decode_refresh_token(refresh_token: str) -> dict[str, Any] | None:
+def decode_refresh_token(refresh_token: str) -> dict[str, Any]:
     secret = settings.refresh_token_secret.get_secret_value()
     return _decode_token(refresh_token, secret)

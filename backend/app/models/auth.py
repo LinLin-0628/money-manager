@@ -25,6 +25,8 @@ class RefreshToken(Base):
         DateTime(timezone=True), nullable=True
     )  # Default already null
 
+    family_expires_at = mapped_column(DateTime(timezone=True), nullable=False)
+
     user = relationship("User", back_populates="refresh_tokens")
 
     __table_args__ = (
