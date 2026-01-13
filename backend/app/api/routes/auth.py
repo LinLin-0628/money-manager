@@ -61,3 +61,14 @@ def refresh_tokens(
     )
 
     return AccessToken(access_token=tokens.access_token)
+
+
+@router.post("/logout", status_code=status.HTTP_200_OK)
+def logout(
+    refresh_token: str | None = Cookie(default=None),
+    auth_service: AuthService = Depends(get_auth_service),
+) -> None:
+    if not refresh_token:
+        raise InvalidRefreshToken("refresh_token cookie is missing")
+
+    auth_service.logout_user(refresh_token)
