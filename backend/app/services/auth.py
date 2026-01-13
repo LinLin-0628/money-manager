@@ -2,16 +2,18 @@ import logging
 from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
-from app.core.exceptions import (
-    AppException,
+from app.core.exceptions.auth import (
     InvalidCredentials,
     InvalidRefreshToken,
+    InvalidRefreshTokenSignature,
     InvalidTokenSignature,
+    MalformedRefreshTokenError,
     MalformedTokenError,
     RefreshTokenExpired,
     TokenExpired,
-    UserNotFound,
 )
+from app.core.exceptions.base import AppException
+from app.core.exceptions.user import UserNotFound
 from app.core.security import (
     decode_refresh_token,
     generate_access_token,
@@ -132,10 +134,10 @@ class AuthService:
             refresh_token_payload = decode_refresh_token(refresh_token)
         except TokenExpired as e:
             raise RefreshTokenExpired() from e
-        except MalformedTokenError:
-            raise
-        except InvalidTokenSignature:
-            raise
+        except MalformedTokenError as e:
+            raise MalformedRefreshTokenError() from e
+        except InvalidTokenSignature as e:
+            raise InvalidRefreshTokenSignature() from e
 
         if refresh_token_payload.get("type") != "refresh":
             raise MalformedTokenError("Token is not refresh token")
@@ -171,7 +173,10 @@ class AuthService:
 
         if token_in_db.family_expires_at < datetime.now(UTC):
             self._revoke_token(token_in_db.id)
-            raise RefreshTokenExpired()
+            raise RefreshTokenExpired(
+                "Refresh token family expired",
+                details={"code": "refresh_token_expired", "logout": True},
+            )
 
         now = datetime.now(UTC)
         access_token_expire = now + timedelta(

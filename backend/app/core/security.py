@@ -7,7 +7,11 @@ from typing import Any
 from jose import ExpiredSignatureError, JWTError, jwt
 from passlib.context import CryptContext
 
-from app.core.exceptions import InvalidTokenSignature, MalformedTokenError, TokenExpired
+from app.core.exceptions.auth import (
+    InvalidTokenSignature,
+    MalformedTokenError,
+    TokenExpired,
+)
 from app.core.settings import settings
 
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")

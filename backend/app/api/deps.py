@@ -4,13 +4,13 @@ from fastapi import Depends
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 
-from app.core.exceptions import (
+from app.core.exceptions.auth import (
     AccessTokenExpired,
     InvalidTokenSignature,
     MalformedTokenError,
     TokenExpired,
-    UserNotFound,
 )
+from app.core.exceptions.user import UserNotFound
 from app.core.security import decode_access_token
 from app.db.database import get_db
 from app.models.user import User
