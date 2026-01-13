@@ -44,8 +44,8 @@ def login(
 @router.post("/refresh", status_code=status.HTTP_200_OK, response_model=AccessToken)
 def refresh_tokens(
     response: Response,
-    refresh_token: Annotated[str | None, Cookie(default=None)],
     auth_service: Annotated[AuthService, Depends(get_auth_service)],
+    refresh_token: Annotated[str | None, Cookie()] = None,
 ) -> AccessToken:
     if not refresh_token:
         raise InvalidRefreshToken("refresh_token cookie is missing")
@@ -67,8 +67,8 @@ def refresh_tokens(
 @router.post("/logout", status_code=status.HTTP_200_OK)
 def logout(
     response: Response,
-    refresh_token: Annotated[str | None, Cookie(default=None)],
     auth_service: Annotated[AuthService, Depends(get_auth_service)],
+    refresh_token: Annotated[str | None, Cookie()] = None,
 ) -> None:
     if not refresh_token:
         raise InvalidRefreshToken("refresh_token cookie is missing")
