@@ -19,7 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
-// Custom API instance
+// Custom Axios instance (now using lib/axios as configured previously)
 import api from "@/lib/api";
 
 export default function SignUpPage() {
@@ -42,8 +42,9 @@ export default function SignUpPage() {
   const onSubmit = async (data: any) => {
     setShowError(false);
     try {
-      /** * Sends the user registration data to the FastAPI backend.
-       * The backend hashes the password and saves the user.
+      /** * 1. API CALL
+       * Your backend user.py: @router.post("/register")
+       * Expects JSON matching UserCreate schema: { name, email, password }
        */
       await api.post("/api/users/register", {
         name: data.name,
@@ -51,24 +52,25 @@ export default function SignUpPage() {
         password: data.password,
       });
 
-      // On success, redirect to login page as requested
+      // 2. SUCCESS: Redirect to login page
       router.push("/login");
     } catch (error: any) {
       /**
-       * Handles registration errors.
-       * Specifically catches the 'UserAlreadyExists' error raised by the service.
+       * 3. ERROR HANDLING
+       * Based on your exception_handler.py, the backend returns:
+       * { "error": { "message": "User with this email already exists", ... } }
        */
-      const msg =
-        error.response?.data?.detail ||
-        "An unexpected error occurred during registration.";
+      const errorPayload = error.response?.data?.error;
+      const msg = errorPayload?.message || "An unexpected error occurred during registration.";
+
       setErrorMessage(msg);
       setShowError(true);
+      console.error("Registration failed:", msg);
     }
   };
 
   return (
     <div className="relative flex min-h-screen items-center justify-center bg-background p-4 text-foreground">
-      {/* Sign Up Card */}
       <Card className="w-full max-w-md border-border shadow-lg">
         <CardHeader>
           <CardTitle className="text-2xl font-bold">
@@ -88,7 +90,10 @@ export default function SignUpPage() {
                 id="name"
                 type="text"
                 placeholder="John Doe"
-                {...register("name", { required: "Name is required" })}
+                {...register("name", {
+                  required: "Name is required",
+                  minLength: { value: 2, message: "Name is too short" }
+                })}
               />
               {errors.name && (
                 <p className="text-xs font-medium text-destructive">
@@ -104,7 +109,13 @@ export default function SignUpPage() {
                 id="email"
                 type="email"
                 placeholder="name@example.com"
-                {...register("email", { required: "Email is required" })}
+                {...register("email", {
+                  required: "Email is required",
+                  pattern: {
+                    value: /\S+@\S+\.\S+/,
+                    message: "Invalid email format"
+                  }
+                })}
               />
               {errors.email && (
                 <p className="text-xs font-medium text-destructive">
@@ -155,12 +166,12 @@ export default function SignUpPage() {
         </CardFooter>
       </Card>
 
-      {/* Error Alert */}
+      {/* Fixed Error Alert */}
       {showError && (
         <div className="fixed bottom-6 right-6 w-full max-w-sm animate-in fade-in slide-in-from-right-5">
           <Alert variant="destructive" className="relative shadow-2xl">
             <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Error</AlertTitle>
+            <AlertTitle>Registration Error</AlertTitle>
             <AlertDescription>{errorMessage}</AlertDescription>
             <Button
               variant="ghost"

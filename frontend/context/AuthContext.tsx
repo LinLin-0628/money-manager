@@ -8,7 +8,7 @@ import React, {
   useRef,
 } from "react";
 import { useRouter } from "next/navigation";
-import api from "@/lib/api";
+import api, { setupInterceptors } from "@/lib/api";
 
 interface AuthContextType {
   accessToken: string | null;
@@ -24,35 +24,33 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
-  // Use a ref to prevent double-initialization in React Strict Mode
-  const isMounted = useRef(false);
+  // Use a ref to ensure the initialization only runs once (prevents strict mode double-triggers)
+  const isInitialized = useRef(false);
 
   const logout = () => {
     setAccessToken(null);
+    // Note: You may want to call api.post("/api/auth/logout") here
+    // to clear the cookie on the server as well.
     router.push("/login");
   };
 
-  // 1. SESSION RESTORATION (The "Silent Refresh")
+  // 1. SILENT REFRESH (Restores session on hard refresh)
   useEffect(() => {
-    if (isMounted.current) return;
-    isMounted.current = true;
+    if (isInitialized.current) return;
+    isInitialized.current = true;
 
     const restoreSession = async () => {
       try {
-        // IMPORTANT: Ensure your axios instance has { withCredentials: true }
-        // This is what forces the browser to send the HttpOnly refresh_token cookie
-        const { data } = await api.post(
-          "/api/auth/refresh",
-          {},
-          { withCredentials: true },
-        );
-
-        if (data.access_token) {
-          setAccessToken(data.access_token);
-          console.log("Session restored successfully");
-        }
+        /**
+         * Your backend auth.py: @router.post("/refresh")
+         * returns AccessToken(access_token=...)
+         */
+        const { data } = await api.post("/api/auth/refresh");
+        setAccessToken(data.access_token);
+        console.log("Auth: Session restored via refresh token.");
       } catch (error) {
-        console.warn("No valid refresh token found or session expired.");
+        // We don't logout() here because the user might just be a guest
+        console.warn("Auth: No active session found.");
       } finally {
         setIsLoading(false);
       }
@@ -61,74 +59,30 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     restoreSession();
   }, []);
 
-  // 2. INTERCEPTORS
+  // 2. INTERCEPTOR SYNC
+  // We use the setupInterceptors from your lib/axios.ts to handle
+  // the complex queueing and nested error objects from exception_handler.py
   useEffect(() => {
-    // Request Interceptor: Attach current token to outgoing requests
-    const reqInterceptor = api.interceptors.request.use((config) => {
-      if (accessToken) {
-        config.headers.Authorization = `Bearer ${accessToken}`;
-      }
-      // Ensure all requests from this instance send cookies
-      config.withCredentials = true;
-      return config;
-    });
-
-    // Response Interceptor: Handle 401s and "expired: true"
-    const resInterceptor = api.interceptors.response.use(
-      (response) => response,
-      async (error) => {
-        const originalRequest = error.config;
-
-        // Backend signal: { details: { expired: true } }
-        const isExpired = error.response?.data?.details?.expired === true;
-
-        if (isExpired && !originalRequest._retry) {
-          originalRequest._retry = true;
-          try {
-            const { data } = await api.post(
-              "/api/auth/refresh",
-              {},
-              { withCredentials: true },
-            );
-            const newAccessToken = data.access_token;
-
-            setAccessToken(newAccessToken);
-            originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-
-            return api(originalRequest);
-          } catch (refreshError) {
-            logout();
-            return Promise.reject(refreshError);
-          }
-        }
-
-        // Backend signal: { logout: true }
-        if (error.response?.data?.logout === true) {
-          logout();
-        }
-
-        return Promise.reject(error);
-      },
-    );
-
-    return () => {
-      api.interceptors.request.eject(reqInterceptor);
-      api.interceptors.response.eject(resInterceptor);
-    };
+    const cleanup = setupInterceptors(accessToken, setAccessToken, logout);
+    return () => cleanup();
   }, [accessToken]);
 
   return (
     <AuthContext.Provider
       value={{ accessToken, setAccessToken, logout, isLoading }}
     >
+      {/* Critical: We don't render children until the silent refresh check is done.
+          This prevents "flickering" where a user sees the login page for 100ms
+          before being redirected to the dashboard.
+      */}
       {!isLoading ? (
         children
       ) : (
-        <div className="flex min-h-screen items-center justify-center bg-background">
-          <div className="flex flex-col items-center gap-2">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-            <p className="text-sm text-muted-foreground">Checking session...</p>
-          </div>
+        <div className="flex min-h-screen flex-col items-center justify-center bg-background">
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+          <p className="mt-4 text-sm font-medium text-muted-foreground">
+            Verifying your session...
+          </p>
         </div>
       )}
     </AuthContext.Provider>
