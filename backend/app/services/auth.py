@@ -147,7 +147,7 @@ class AuthService:
         if isinstance(family_id_raw, (str, UUID)):
             family_id = ensure_uuid(family_id_raw)
         else:
-            raise MalformedTokenError(
+            raise MalformedRefreshTokenError(
                 "Refresh token family_id is missing",
                 details={"code": "malformed_refresh_token", "logout": True},
             )
@@ -155,7 +155,7 @@ class AuthService:
         # family_expires_at -> numeric timestamp -> datetime
         family_expires_at_ts = refresh_token_payload.get("family_expires_at")
         if not isinstance(family_expires_at_ts, (int, float)):
-            raise MalformedTokenError(
+            raise MalformedRefreshTokenError(
                 "Refresh token family_expires_at is missing or invalid",
                 details={"code": "malformed_refresh_token", "logout": True},
             )
@@ -166,7 +166,7 @@ class AuthService:
         if isinstance(user_id_raw, (str, UUID)):
             user_id = ensure_uuid(user_id_raw)
         else:
-            raise MalformedTokenError(
+            raise MalformedRefreshTokenError(
                 "Token subject is missing or invalid",
                 details={"code": "malformed_refresh_token", "logout": True},
             )

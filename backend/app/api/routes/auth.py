@@ -48,7 +48,10 @@ def refresh_tokens(
     refresh_token: Annotated[str | None, Cookie()] = None,
 ) -> AccessToken:
     if not refresh_token:
-        raise InvalidRefreshToken("refresh_token cookie is missing")
+        raise InvalidRefreshToken(
+            "refresh_token cookie is missing",
+            details={"code": "invalid_refresh_token", "logout": True},
+        )
 
     tokens = auth_service.refresh_tokens(refresh_token)
 
@@ -71,7 +74,10 @@ def logout(
     refresh_token: Annotated[str | None, Cookie()] = None,
 ) -> None:
     if not refresh_token:
-        raise InvalidRefreshToken("refresh_token cookie is missing")
+        raise InvalidRefreshToken(
+            "refresh_token cookie is missing",
+            details={"code": "invalid_refresh_token", "logout": True},
+        )
 
     auth_service.logout_user(refresh_token)
 
