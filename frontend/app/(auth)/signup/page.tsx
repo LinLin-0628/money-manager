@@ -3,6 +3,7 @@
 import React, { useState } from "react"
 import { useForm } from "react-hook-form"
 import { AlertCircle, Loader2, X } from "lucide-react"
+import { useRouter } from "next/navigation"
 
 // Shadcn UI Components
 import { Button } from "@/components/ui/button"
@@ -18,8 +19,13 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
+// Custom API instance
+import api from "@/lib/api"
+
 export default function SignUpPage() {
-    const [showError, setShowError] = useState(true)
+    const [showError, setShowError] = useState(false)
+    const [errorMessage, setErrorMessage] = useState("")
+    const router = useRouter()
 
     const {
         register,
@@ -34,9 +40,28 @@ export default function SignUpPage() {
     })
 
     const onSubmit = async (data: any) => {
-        // Simulating API call
-        await new Promise((resolve) => setTimeout(resolve, 1000))
-        setShowError(true)
+        setShowError(false)
+        try {
+            /** * Sends the user registration data to the FastAPI backend.
+             * The backend hashes the password and saves the user.
+             */
+            await api.post("/api/users/register", {
+                name: data.name,
+                email: data.email,
+                password: data.password
+            })
+
+            // On success, redirect to login page as requested
+            router.push("/login")
+        } catch (error: any) {
+            /**
+             * Handles registration errors.
+             * Specifically catches the 'UserAlreadyExists' error raised by the service.
+             */
+            const msg = error.response?.data?.detail || "An unexpected error occurred during registration."
+            setErrorMessage(msg)
+            setShowError(true)
+        }
     }
 
     return (
@@ -108,21 +133,25 @@ export default function SignUpPage() {
                 <CardFooter className="flex justify-center border-t pt-4">
                     <p className="text-sm text-muted-foreground">
                         Already have an account?{" "}
-                        <Button variant="link" className="p-0 h-auto font-semibold">
+                        <Button
+                            variant="link"
+                            className="p-0 h-auto font-semibold"
+                            onClick={() => router.push("/login")}
+                        >
                             Login
                         </Button>
                     </p>
                 </CardFooter>
             </Card>
 
-            {/* Default Shadcn Alert - Fixed Bottom Right */}
+            {/* Error Alert */}
             {showError && (
                 <div className="fixed bottom-6 right-6 w-full max-w-sm animate-in fade-in slide-in-from-right-5">
                     <Alert variant="destructive" className="relative shadow-2xl">
                         <AlertCircle className="h-4 w-4" />
                         <AlertTitle>Error</AlertTitle>
                         <AlertDescription>
-                            An account with this email already exists.
+                            {errorMessage}
                         </AlertDescription>
                         <Button
                             variant="ghost"

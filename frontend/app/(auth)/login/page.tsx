@@ -3,6 +3,7 @@
 import React, { useState } from "react"
 import { useForm } from "react-hook-form"
 import { AlertCircle, Loader2, X } from "lucide-react"
+import { useRouter } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -16,9 +17,14 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { useAuth } from "@/context/AuthContext"
+import api from "@/lib/api"
 
 export default function LoginPage() {
-    const [showError, setShowError] = useState(true)
+    const [showError, setShowError] = useState(false) // Default to false
+    const [errorMessage, setErrorMessage] = useState("")
+    const { setAccessToken } = useAuth()
+    const router = useRouter()
 
     const {
         register,
@@ -32,8 +38,31 @@ export default function LoginPage() {
     })
 
     const onSubmit = async (data: any) => {
-        // Simulating API call
-        console.log(data)
+        setShowError(false)
+
+        try {
+            // OAuth2PasswordBearer expects form-data usually, but
+            // FastAPI's login can be handled via JSON or Form depending on your router.
+            // Based on deps.py, it points to api/auth/login.
+
+            const formData = new FormData()
+            formData.append("username", data.email) // OAuth2 uses 'username' field
+            formData.append("password", data.password)
+
+            const response = await api.post("/api/auth/login", formData)
+
+            // Store the access token in our Context State
+            setAccessToken(response.data.access_token)
+
+            // Redirect to dashboard or home after successful login
+            router.push("/dashboard")
+        } catch (error: any) {
+            console.error("Login failed:", error)
+            setErrorMessage(
+                error.response?.data?.detail || "Invalid credentials. Please check your email and password."
+            )
+            setShowError(true)
+        }
     }
 
     return (
@@ -104,7 +133,7 @@ export default function LoginPage() {
                         <AlertCircle className="h-4 w-4" />
                         <AlertTitle>Error</AlertTitle>
                         <AlertDescription>
-                            Invalid credentials. Please check your email and password.
+                            {errorMessage}
                         </AlertDescription>
                         <Button
                             variant="ghost"
