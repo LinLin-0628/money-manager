@@ -45,7 +45,9 @@ def get_current_user(
     try:
         payload = decode_access_token(access_token)
     except TokenExpired as e:
-        raise AccessTokenExpired() from e
+        raise AccessTokenExpired(
+            details={"code": "token_expired", "expired": True}
+        ) from e
     except MalformedTokenError:
         raise
     except InvalidTokenSignature:

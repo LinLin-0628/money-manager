@@ -65,3 +65,8 @@ class AccessTokenExpired(TokenExpired):
 
 class RefreshTokenExpired(TokenExpired):
     message = "Refresh token has expired"
+
+
+class InvalidRefreshToken(AppException):
+    status_code = status.HTTP_401_UNAUTHORIZED
+    message = "Invalid refresh token"

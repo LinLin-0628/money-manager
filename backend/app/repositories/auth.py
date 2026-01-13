@@ -1,7 +1,7 @@
 from datetime import UTC, datetime
 from uuid import UUID
 
-from sqlalchemy import update
+from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
 from app.models import RefreshToken
@@ -26,3 +26,13 @@ class AuthRepository:
             .values(revoked_at=now)
         )
         self.db.execute(stmt)
+
+    def get_refresh_token_by_hash(self, token_hash: str) -> RefreshToken | None:
+        stmt = select(RefreshToken).where(RefreshToken.token_hash == token_hash)
+        return self.db.execute(stmt).scalar_one_or_none()
+
+    def revoke_token_by_id(self, token_id: int, now: datetime):
+        token = self.db.get(RefreshToken, token_id)
+        if token and token.revoked_at is None:
+            token.revoked_at = now
+            self.db.flush()
