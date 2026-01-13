@@ -4,7 +4,7 @@ from http import HTTPStatus
 from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
 
-from app.core.exceptions import AppException
+from app.core.exceptions.base import AppException
 from app.core.middlewares import get_log_level
 
 logger = logging.getLogger(__name__)
@@ -31,7 +31,10 @@ def add_exception_handler(app: FastAPI) -> None:
                 content={
                     "error": {
                         "message": "Unauthorized",
-                        "details": getattr(exc, "details", None),
+                        "details": {
+                            "description": exc.message,
+                            **(getattr(exc, "details", {}) or {}),
+                        },
                     },
                 },
                 headers={"WWW-Authenticate": "Bearer"},

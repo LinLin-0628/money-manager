@@ -2,16 +2,18 @@ import logging
 from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
-from app.core.exceptions import (
-    AppException,
+from app.core.exceptions.auth import (
     InvalidCredentials,
     InvalidRefreshToken,
+    InvalidRefreshTokenSignature,
     InvalidTokenSignature,
+    MalformedRefreshTokenError,
     MalformedTokenError,
     RefreshTokenExpired,
     TokenExpired,
-    UserNotFound,
 )
+from app.core.exceptions.base import AppException
+from app.core.exceptions.user import UserNotFound
 from app.core.security import (
     decode_refresh_token,
     generate_access_token,
@@ -26,7 +28,7 @@ from app.models import RefreshToken
 from app.repositories.auth import AuthRepository
 from app.schemas.auth import TokenPair
 from app.services.user import UserService
-from app.utils.utils import anonymize_sensitive_data, ensure_uuid
+from app.utils.utils import anonymize_sensitive_data, ensure_uuid, get_current_time
 
 logger = logging.getLogger(__name__)
 
@@ -54,8 +56,8 @@ class AuthService:
             raise InvalidCredentials()
 
         try:
-            refresh_token_family_id = generate_family_id()
-            now = datetime.now(UTC)
+            family_id = generate_family_id()
+            now = get_current_time()
             access_token_expire = now + timedelta(
                 minutes=settings.access_token_expire_minutes
             )
@@ -65,25 +67,25 @@ class AuthService:
             family_expires_at = refresh_token_expire
 
             access_token = generate_access_token(
-                user.id, iat=now, exp=access_token_expire
+                user_id=user.id, iat=now, exp=access_token_expire
             )
             refresh_token = generate_refresh_token(
-                user.id,
-                refresh_token_family_id,
+                user_id=user.id,
+                family_id=family_id,
                 iat=now,
                 exp=refresh_token_expire,
                 family_expires_at=family_expires_at,
             )
 
-            refresh_token_hash = hash_token(refresh_token)
+            self.auth_repo.revoke_all_refresh_tokens(user.id, now)
 
-            self.auth_repo.revoke_all_refresh_tokens(user.id)
+            refresh_token_hash = hash_token(refresh_token)
 
             self.auth_repo.create_refresh_token(
                 RefreshToken(
                     token_hash=refresh_token_hash,
                     user_id=user.id,
-                    family_id=refresh_token_family_id,
+                    family_id=family_id,
                     expires_at=refresh_token_expire,
                     created_at=now,
                     family_expires_at=family_expires_at,
@@ -132,10 +134,10 @@ class AuthService:
             refresh_token_payload = decode_refresh_token(refresh_token)
         except TokenExpired as e:
             raise RefreshTokenExpired() from e
-        except MalformedTokenError:
-            raise
-        except InvalidTokenSignature:
-            raise
+        except MalformedTokenError as e:
+            raise MalformedRefreshTokenError() from e
+        except InvalidTokenSignature as e:
+            raise InvalidRefreshTokenSignature() from e
 
         if refresh_token_payload.get("type") != "refresh":
             raise MalformedTokenError("Token is not refresh token")
@@ -163,17 +165,23 @@ class AuthService:
             raise MalformedTokenError("Token subject is missing or invalid")
 
         # Check in db
-        token_in_db = self.auth_repo.get_refresh_token_by_hash(
-            hash_token(refresh_token)
-        )
-        if not token_in_db or token_in_db.revoked_at is not None:
-            raise InvalidRefreshToken()
+        token_in_db = self.get_token(refresh_token)
 
-        if token_in_db.family_expires_at < datetime.now(UTC):
+        if not token_in_db:
+            raise InvalidRefreshToken("Refresh token hash not found in database")
+
+        if token_in_db.revoked_at is not None:
+            raise InvalidRefreshToken("Refresh token already revoked")
+
+        now = get_current_time()
+
+        if family_expires_at < now:
             self._revoke_token(token_in_db.id)
-            raise RefreshTokenExpired()
+            raise RefreshTokenExpired(
+                "Refresh token family expired",
+                details={"code": "refresh_token_expired", "logout": True},
+            )
 
-        now = datetime.now(UTC)
         access_token_expire = now + timedelta(
             minutes=settings.access_token_expire_minutes
         )
@@ -236,5 +244,47 @@ class AuthService:
             raise AppException() from e
 
     def _revoke_token(self, refresh_token_id: int) -> None:
-        now = datetime.now(UTC)
+        now = get_current_time()
         self.auth_repo.revoke_token_by_id(refresh_token_id, now)
+
+    def get_token(self, token: str) -> RefreshToken | None:
+        return self.auth_repo.get_refresh_token_by_hash(hash_token(token))
+
+    def logout_user(self, refresh_token: str) -> None:
+        logger.info("Logout user start")
+
+        # Best-effort decode refresh token
+        try:
+            payload = decode_refresh_token(refresh_token)
+        except (TokenExpired, MalformedTokenError, InvalidTokenSignature) as e:
+            # Token invalid or expired — still allow logout
+            raise InvalidRefreshToken() from e
+
+        # subject -> UUID
+        user_id_raw = payload.get("sub")
+        if isinstance(user_id_raw, (str, UUID)):
+            user_id = ensure_uuid(user_id_raw)
+        else:
+            raise MalformedTokenError("Token subject is missing or invalid")
+
+        now = get_current_time()
+
+        try:
+            self.auth_repo.revoke_all_refresh_tokens(user_id, now)
+            self.auth_repo.db.commit()
+
+            logger.info(
+                "Logout user complete",
+                extra={
+                    "user_id": str(user_id),
+                    "logged_out": True,
+                },
+            )
+
+        except Exception as e:
+            self.auth_repo.db.rollback()
+            logger.exception(
+                "Logout failed",
+                extra={"detail": str(e)},
+            )
+            raise AppException() from e
