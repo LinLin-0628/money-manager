@@ -1,3 +1,4 @@
+from typing import Annotated
 from uuid import UUID
 
 from fastapi import Depends
@@ -25,12 +26,12 @@ from app.utils.utils import ensure_uuid
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/login")
 
 
-def get_user_service(db: Session = Depends(get_db)) -> UserService:
+def get_user_service(db: Annotated[Session, Depends(get_db)]) -> UserService:
     user_repo = UserRepository(db)
     return UserService(user_repo)
 
 
-def get_auth_service(db: Session = Depends(get_db)) -> AuthService:
+def get_auth_service(db: Annotated[Session, Depends(get_db)]) -> AuthService:
     user_repo = UserRepository(db)
     user_service = UserService(user_repo)
 
@@ -42,8 +43,8 @@ def get_auth_service(db: Session = Depends(get_db)) -> AuthService:
 
 
 def get_current_user(
-    access_token: str = Depends(oauth2_scheme),
-    user_service: UserService = Depends(get_user_service),
+    access_token: Annotated[str, Depends(oauth2_scheme)],
+    user_service: Annotated[UserService, Depends(get_user_service)],
 ) -> User:
     try:
         payload = decode_access_token(access_token)
