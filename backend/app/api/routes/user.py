@@ -18,7 +18,7 @@ def register_user(
     return user_service.register_user(user_data)
 
 
-@router.get("/me", response_model=UserRead)
+@router.get("/me", status_code=status.HTTP_200_OK, response_model=UserRead)
 def read_current_user(
     current_user: Annotated[User, Depends(get_current_user)],
 ) -> User:

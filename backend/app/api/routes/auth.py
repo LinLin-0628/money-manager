@@ -67,7 +67,7 @@ def refresh_tokens(
     return AccessToken(access_token=tokens.access_token)
 
 
-@router.post("/logout", status_code=status.HTTP_200_OK)
+@router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
 def logout(
     response: Response,
     auth_service: Annotated[AuthService, Depends(get_auth_service)],
