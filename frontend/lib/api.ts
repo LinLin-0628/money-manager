@@ -2,7 +2,7 @@ import axios from "axios";
 
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000",
-  withCredentials: true, // Required to send the refresh_token HttpOnly cookie
+  withCredentials: true,
 });
 
 let isRefreshing = false;
@@ -16,17 +16,25 @@ const processQueue = (error: any, token: string | null = null) => {
   failedQueue = [];
 };
 
+// 🔥 SOLUTION: Store the token getter as a module-level variable
+// This will be updated by AuthContext and always returns current token
+let tokenGetter: () => string | null = () => null;
+
+export const setTokenGetter = (getter: () => string | null) => {
+  tokenGetter = getter;
+};
+
 export const setupInterceptors = (
-  accessToken: string | null,
   setAccessToken: (token: string | null) => void,
   logout: () => void,
 ) => {
   // Request Interceptor: Attach Access Token
   const reqInterceptor = api.interceptors.request.use(
     (config) => {
-      // Only attach if we have a token and it hasn't been set manually
-      if (accessToken && !config.headers.Authorization) {
-        config.headers.Authorization = `Bearer ${accessToken}`;
+      // 🔥 FIX: Always get the CURRENT token from the getter
+      const currentToken = tokenGetter();
+      if (currentToken && !config.headers.Authorization) {
+        config.headers.Authorization = `Bearer ${currentToken}`;
       }
       return config;
     },
@@ -39,8 +47,6 @@ export const setupInterceptors = (
     async (error) => {
       const originalRequest = error.config;
 
-      // New Backend Structure Check:
-      // error.response.data looks like: { "error": { "message": "...", "details": { "expired": true } } }
       const errorPayload = error.response?.data?.error;
       const details = errorPayload?.details;
 
@@ -61,8 +67,6 @@ export const setupInterceptors = (
         isRefreshing = true;
 
         try {
-          // Call /api/auth/refresh which rotates tokens and sets new cookie
-          // Returns AccessToken schema: { access_token: string, token_type: "bearer" }
           const response = await axios.post(
             `${api.defaults.baseURL}/api/auth/refresh`,
             {},
@@ -76,7 +80,6 @@ export const setupInterceptors = (
           originalRequest.headers.Authorization = `Bearer ${access_token}`;
           return api(originalRequest);
         } catch (refreshError: any) {
-          // If refresh fails (e.g., RefreshTokenExpired), backend sends logout: true
           processQueue(refreshError, null);
           logout();
           return Promise.reject(refreshError);
@@ -86,7 +89,6 @@ export const setupInterceptors = (
       }
 
       // 2. Handle Explicit Logout Signal
-      // Triggered by RefreshTokenExpired or RevokedToken in AuthService
       if (details?.logout === true) {
         logout();
       }
