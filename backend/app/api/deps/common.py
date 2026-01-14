@@ -28,6 +28,6 @@ def get_auth_service(db: Annotated[Session, Depends(get_db)]) -> AuthService:
     )
 
 
-def get_account_service(db: Session = Depends(get_db)) -> AccountService:
+def get_account_service(db: Annotated[Session, Depends(get_db)]) -> AccountService:
     account_repo = AccountRepository(db)
     return AccountService(account_repo)
