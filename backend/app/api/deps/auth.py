@@ -3,8 +3,8 @@ from uuid import UUID
 
 from fastapi import Depends
 from fastapi.security import OAuth2PasswordBearer
-from sqlalchemy.orm import Session
 
+from app.api.deps.common import get_user_service
 from app.core.exceptions.auth import (
     AccessTokenExpired,
     InvalidAccessTokenSignature,
@@ -15,31 +15,11 @@ from app.core.exceptions.auth import (
 )
 from app.core.exceptions.user import UserNotFound
 from app.core.security import decode_access_token
-from app.db.database import get_db
-from app.models.user import User
-from app.repositories.auth import AuthRepository
-from app.repositories.user import UserRepository
-from app.services.auth import AuthService
+from app.models import User
 from app.services.user import UserService
 from app.utils.utils import ensure_uuid
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/login")
-
-
-def get_user_service(db: Annotated[Session, Depends(get_db)]) -> UserService:
-    user_repo = UserRepository(db)
-    return UserService(user_repo)
-
-
-def get_auth_service(db: Annotated[Session, Depends(get_db)]) -> AuthService:
-    user_repo = UserRepository(db)
-    user_service = UserService(user_repo)
-
-    auth_repo = AuthRepository(db)
-    return AuthService(
-        auth_repo,
-        user_service,
-    )
 
 
 def get_current_user(

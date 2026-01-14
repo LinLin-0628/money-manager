@@ -4,7 +4,7 @@ from typing import Annotated
 from fastapi import APIRouter, Cookie, Depends, Response, status
 from fastapi.security import OAuth2PasswordRequestForm
 
-from app.api.deps import get_auth_service
+from app.api.deps.common import get_auth_service
 from app.core.exceptions.auth import InvalidRefreshToken
 from app.core.settings import settings
 from app.schemas.auth import AccessToken
