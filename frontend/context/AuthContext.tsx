@@ -35,9 +35,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const isInitialized = useRef(false);
 
-  const logout = () => {
-    updateAccessToken(null);
-    router.push("/login");
+  const logout = async () => {
+    try {
+      // Call backend to clear the refresh_token cookie
+      await api.post("/api/auth/logout");
+    } catch (error) {
+      // Even if logout fails, clear local token
+      console.error("Logout request failed:", error);
+    } finally {
+      // Always clear the access token and redirect
+      updateAccessToken(null);
+      router.push("/login");
+    }
   };
 
   // 🔥 FIX: Set up the token getter ONCE before anything else

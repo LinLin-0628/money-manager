@@ -41,34 +41,23 @@ export default function LoginPage() {
     setShowError(false);
 
     try {
-      /**
-       * 1. PREPARE OAUTH2 FORM DATA
-       * FastAPI's OAuth2PasswordRequestForm expects 'username' and 'password'
-       * in application/x-www-form-urlencoded format.
-       */
+      // Prepare OAuth2 form data
       const params = new URLSearchParams();
       params.append("username", data.email);
       params.append("password", data.password);
 
       const response = await api.post("/api/auth/login", params);
 
-      /**
-       * 2. HANDLE SUCCESS
-       * Backend returns AccessToken(access_token=..., token_type="bearer")
-       * HttpOnly refresh_token is set automatically in the cookie by the backend.
-       */
+      // Set the access token (refresh_token is in HttpOnly cookie)
       setAccessToken(response.data.access_token);
 
-      // Redirect to the dashboard
+      // Redirect to dashboard
       router.push("/dashboard");
     } catch (error: any) {
-      /**
-       * 3. HANDLE NESTED ERRORS
-       * Based on your exception_handler.py, errors are formatted as:
-       * { "error": { "message": "...", "details": { ... } } }
-       */
       const errorPayload = error.response?.data?.error;
-      const msg = errorPayload?.message || "An unexpected error occurred. Please try again.";
+      const msg =
+        errorPayload?.message ||
+        "An unexpected error occurred. Please try again.";
 
       setErrorMessage(msg);
       setShowError(true);
@@ -95,12 +84,13 @@ export default function LoginPage() {
                 id="email"
                 type="email"
                 placeholder="name@example.com"
+                autoComplete="email"
                 {...register("email", {
-                    required: "Email is required",
-                    pattern: {
-                        value: /\S+@\S+\.\S+/,
-                        message: "Invalid email format"
-                    }
+                  required: "Email is required",
+                  pattern: {
+                    value: /\S+@\S+\.\S+/,
+                    message: "Invalid email format",
+                  },
                 })}
               />
               {errors.email && (
@@ -114,7 +104,13 @@ export default function LoginPage() {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="password">Password</Label>
-                <Button variant="link" size="sm" className="px-0 font-normal" type="button">
+                <Button
+                  variant="link"
+                  size="sm"
+                  className="px-0 font-normal text-xs"
+                  type="button"
+                  onClick={() => router.push("/forgot-password")}
+                >
                   Forgot password?
                 </Button>
               </div>
@@ -122,6 +118,7 @@ export default function LoginPage() {
                 id="password"
                 type="password"
                 placeholder="••••••••"
+                autoComplete="current-password"
                 {...register("password", { required: "Password is required" })}
               />
               {errors.password && (
@@ -135,7 +132,7 @@ export default function LoginPage() {
               {isSubmitting && (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               )}
-              Sign In
+              {isSubmitting ? "Signing in..." : "Sign In"}
             </Button>
           </form>
         </CardContent>
@@ -144,9 +141,9 @@ export default function LoginPage() {
           <p className="text-sm text-muted-foreground">
             Don't have an account?{" "}
             <Button
-                variant="link"
-                className="p-0 h-auto font-semibold"
-                onClick={() => router.push("/register")}
+              variant="link"
+              className="p-0 h-auto font-semibold"
+              onClick={() => router.push("/register")}
             >
               Sign up
             </Button>
@@ -156,7 +153,7 @@ export default function LoginPage() {
 
       {/* Error Alert */}
       {showError && (
-        <div className="fixed bottom-6 right-6 w-full max-w-sm animate-in fade-in slide-in-from-right-5">
+        <div className="fixed bottom-6 right-6 w-full max-w-sm animate-in fade-in slide-in-from-right-5 z-50">
           <Alert variant="destructive" className="relative shadow-2xl">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Login Error</AlertTitle>
