@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from uuid import UUID
 
 from sqlalchemy import func, select
@@ -14,7 +15,9 @@ class AccountRepository:
         stmt = select(func.count(Account.id)).where(Account.user_id == user_id)
         return self.db.execute(stmt).scalar_one()
 
-    def get_all_accounts(self, user_id: UUID, offset: int, limit: int):
+    def get_all_accounts(
+        self, user_id: UUID, offset: int, limit: int
+    ) -> Sequence[Account]:
         stmt = (
             select(Account)
             .where(Account.user_id == user_id)

@@ -1,7 +1,9 @@
 from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 
 
-def round_decimal(value, places="0.01") -> Decimal:
+def round_decimal(
+    value: str | int | float | Decimal | None, places: str = "0.01"
+) -> Decimal:
     if value is None:
         raise ValueError("Invalid numeric value: 'None'")
 

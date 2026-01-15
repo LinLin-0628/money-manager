@@ -32,7 +32,7 @@ class AccountCreate(BaseModel):
 
     @field_validator("name")
     @classmethod
-    def clean_name(cls, value) -> str:
+    def clean_name(cls, value: str) -> str:
         if value:
             value = value.strip().lower()
 
@@ -43,18 +43,18 @@ class AccountCreate(BaseModel):
 
     @field_validator("description")
     @classmethod
-    def clean_description(cls, value) -> str | None:
+    def clean_description(cls, value: str) -> str | None:
         if value:
             value = value.strip()
 
         if not value:
-            value = None
+            return None  # Equivalent to value = None, then return below
 
         return value
 
     @field_validator("balance", mode="before")
     @classmethod
-    def round_balance(cls, value) -> Decimal:
+    def round_balance(cls, value: str | int | float | Decimal | None) -> Decimal:
         return round_decimal(value)
 
 
@@ -66,7 +66,7 @@ class AccountUpdate(BaseModel):
 
     @field_validator("name")
     @classmethod
-    def clean_name(cls, value) -> str:
+    def clean_name(cls, value: str) -> str:
         if value:
             value = value.strip().lower()
 
@@ -77,12 +77,12 @@ class AccountUpdate(BaseModel):
 
     @field_validator("description")
     @classmethod
-    def clean_description(cls, value) -> str | None:
+    def clean_description(cls, value: str) -> str | None:
         if value:
             value = value.strip()
 
         if not value:
-            value = None
+            return None  # Equivalent to value = None, then return below
 
         return value
 

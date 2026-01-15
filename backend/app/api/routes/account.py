@@ -29,6 +29,6 @@ def create_account(
     account_create_data: AccountCreate,
     service: Annotated[AccountService, Depends(get_account_service)],
     current_user: Annotated[User, Depends(get_current_user)],
-):
+) -> AccountRead:
     new_account = service.create_account(current_user, account_create_data)
-    return new_account
+    return new_account  # type: ignore[return-value]
