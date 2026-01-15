@@ -1,9 +1,8 @@
-// lib/axios.ts
 import axios from "axios";
 
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000",
-  withCredentials: true, // Crucial for sending/receiving refresh token cookies
+  withCredentials: true,
 });
 
 let isRefreshing = false;
@@ -17,16 +16,25 @@ const processQueue = (error: any, token: string | null = null) => {
   failedQueue = [];
 };
 
+// 🔥 SOLUTION: Store the token getter as a module-level variable
+// This will be updated by AuthContext and always returns current token
+let tokenGetter: () => string | null = () => null;
+
+export const setTokenGetter = (getter: () => string | null) => {
+  tokenGetter = getter;
+};
+
 export const setupInterceptors = (
-  accessToken: string | null,
-  setAccessToken: any,
-  logout: any,
+  setAccessToken: (token: string | null) => void,
+  logout: () => void,
 ) => {
   // Request Interceptor: Attach Access Token
   const reqInterceptor = api.interceptors.request.use(
     (config) => {
-      if (accessToken && !config.headers.Authorization) {
-        config.headers.Authorization = `Bearer ${accessToken}`;
+      // 🔥 FIX: Always get the CURRENT token from the getter
+      const currentToken = tokenGetter();
+      if (currentToken && !config.headers.Authorization) {
+        config.headers.Authorization = `Bearer ${currentToken}`;
       }
       return config;
     },
@@ -39,11 +47,11 @@ export const setupInterceptors = (
     async (error) => {
       const originalRequest = error.config;
 
-      // Backend returns refresh: true when access token is invalid
-      if (
-        error.response?.data?.details?.expired === true &&
-        !originalRequest._retry
-      ) {
+      const errorPayload = error.response?.data?.error;
+      const details = errorPayload?.details;
+
+      // 1. Handle Access Token Expiration
+      if (details?.expired === true && !originalRequest._retry) {
         if (isRefreshing) {
           return new Promise((resolve, reject) => {
             failedQueue.push({ resolve, reject });
@@ -59,7 +67,6 @@ export const setupInterceptors = (
         isRefreshing = true;
 
         try {
-          // AuthService.refresh_tokens will set a new refresh cookie and return access_token
           const response = await axios.post(
             `${api.defaults.baseURL}/api/auth/refresh`,
             {},
@@ -73,7 +80,6 @@ export const setupInterceptors = (
           originalRequest.headers.Authorization = `Bearer ${access_token}`;
           return api(originalRequest);
         } catch (refreshError: any) {
-          // If refresh fails or backend signals logout: true
           processQueue(refreshError, null);
           logout();
           return Promise.reject(refreshError);
@@ -82,8 +88,8 @@ export const setupInterceptors = (
         }
       }
 
-      // Explicit logout signal from backend
-      if (error.response?.data?.logout === true) {
+      // 2. Handle Explicit Logout Signal
+      if (details?.logout === true) {
         logout();
       }
 

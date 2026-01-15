@@ -8,7 +8,7 @@ import React, {
   useRef,
 } from "react";
 import { useRouter } from "next/navigation";
-import api from "@/lib/api";
+import api, { setupInterceptors, setTokenGetter } from "@/lib/api";
 
 interface AuthContextType {
   accessToken: string | null;
@@ -24,35 +24,49 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
-  // Use a ref to prevent double-initialization in React Strict Mode
-  const isMounted = useRef(false);
+  // 🔥 FIX: Use ref to store current token, always accessible to interceptor
+  const tokenRef = useRef<string | null>(null);
 
-  const logout = () => {
-    setAccessToken(null);
-    router.push("/login");
+  // 🔥 FIX: Update both state and ref when token changes
+  const updateAccessToken = (token: string | null) => {
+    tokenRef.current = token;
+    setAccessToken(token);
   };
 
-  // 1. SESSION RESTORATION (The "Silent Refresh")
+  const isInitialized = useRef(false);
+
+  const logout = async () => {
+    try {
+      // Call backend to clear the refresh_token cookie
+      await api.post("/api/auth/logout");
+    } catch (error) {
+      // Even if logout fails, clear local token
+      console.error("Logout request failed:", error);
+    } finally {
+      // Always clear the access token and redirect
+      updateAccessToken(null);
+      router.push("/login");
+    }
+  };
+
+  // 🔥 FIX: Set up the token getter ONCE before anything else
   useEffect(() => {
-    if (isMounted.current) return;
-    isMounted.current = true;
+    // Provide the interceptor with a function that ALWAYS returns current token
+    setTokenGetter(() => tokenRef.current);
+  }, []);
+
+  // 1. SILENT REFRESH (Restores session on hard refresh)
+  useEffect(() => {
+    if (isInitialized.current) return;
+    isInitialized.current = true;
 
     const restoreSession = async () => {
       try {
-        // IMPORTANT: Ensure your axios instance has { withCredentials: true }
-        // This is what forces the browser to send the HttpOnly refresh_token cookie
-        const { data } = await api.post(
-          "/api/auth/refresh",
-          {},
-          { withCredentials: true },
-        );
-
-        if (data.access_token) {
-          setAccessToken(data.access_token);
-          console.log("Session restored successfully");
-        }
+        const { data } = await api.post("/api/auth/refresh");
+        updateAccessToken(data.access_token);
+        console.log("Auth: Session restored via refresh token.");
       } catch (error) {
-        console.warn("No valid refresh token found or session expired.");
+        console.warn("Auth: No active session found.");
       } finally {
         setIsLoading(false);
       }
@@ -61,74 +75,29 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     restoreSession();
   }, []);
 
-  // 2. INTERCEPTORS
+  // 2. INTERCEPTOR SETUP (Only needs to run once now!)
   useEffect(() => {
-    // Request Interceptor: Attach current token to outgoing requests
-    const reqInterceptor = api.interceptors.request.use((config) => {
-      if (accessToken) {
-        config.headers.Authorization = `Bearer ${accessToken}`;
-      }
-      // Ensure all requests from this instance send cookies
-      config.withCredentials = true;
-      return config;
-    });
-
-    // Response Interceptor: Handle 401s and "expired: true"
-    const resInterceptor = api.interceptors.response.use(
-      (response) => response,
-      async (error) => {
-        const originalRequest = error.config;
-
-        // Backend signal: { details: { expired: true } }
-        const isExpired = error.response?.data?.details?.expired === true;
-
-        if (isExpired && !originalRequest._retry) {
-          originalRequest._retry = true;
-          try {
-            const { data } = await api.post(
-              "/api/auth/refresh",
-              {},
-              { withCredentials: true },
-            );
-            const newAccessToken = data.access_token;
-
-            setAccessToken(newAccessToken);
-            originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-
-            return api(originalRequest);
-          } catch (refreshError) {
-            logout();
-            return Promise.reject(refreshError);
-          }
-        }
-
-        // Backend signal: { logout: true }
-        if (error.response?.data?.logout === true) {
-          logout();
-        }
-
-        return Promise.reject(error);
-      },
-    );
-
-    return () => {
-      api.interceptors.request.eject(reqInterceptor);
-      api.interceptors.response.eject(resInterceptor);
-    };
-  }, [accessToken]);
+    const cleanup = setupInterceptors(updateAccessToken, logout);
+    return () => cleanup();
+  }, []); // 🔥 Empty deps - interceptor uses tokenRef which is always current
 
   return (
     <AuthContext.Provider
-      value={{ accessToken, setAccessToken, logout, isLoading }}
+      value={{
+        accessToken,
+        setAccessToken: updateAccessToken,
+        logout,
+        isLoading,
+      }}
     >
       {!isLoading ? (
         children
       ) : (
-        <div className="flex min-h-screen items-center justify-center bg-background">
-          <div className="flex flex-col items-center gap-2">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-            <p className="text-sm text-muted-foreground">Checking session...</p>
-          </div>
+        <div className="flex min-h-screen flex-col items-center justify-center bg-background">
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+          <p className="mt-4 text-sm font-medium text-muted-foreground">
+            Verifying your session...
+          </p>
         </div>
       )}
     </AuthContext.Provider>

@@ -21,7 +21,7 @@ import { useAuth } from "@/context/AuthContext";
 import api from "@/lib/api";
 
 export default function LoginPage() {
-  const [showError, setShowError] = useState(false); // Default to false
+  const [showError, setShowError] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const { setAccessToken } = useAuth();
   const router = useRouter();
@@ -41,34 +41,32 @@ export default function LoginPage() {
     setShowError(false);
 
     try {
-      // OAuth2PasswordBearer expects form-data usually, but
-      // FastAPI's login can be handled via JSON or Form depending on your router.
-      // Based on deps.py, it points to api/auth/login.
+      // Prepare OAuth2 form data
+      const params = new URLSearchParams();
+      params.append("username", data.email);
+      params.append("password", data.password);
 
-      const formData = new FormData();
-      formData.append("username", data.email); // OAuth2 uses 'username' field
-      formData.append("password", data.password);
+      const response = await api.post("/api/auth/login", params);
 
-      const response = await api.post("/api/auth/login", formData);
-
-      // Store the access token in our Context State
+      // Set the access token (refresh_token is in HttpOnly cookie)
       setAccessToken(response.data.access_token);
 
-      // Redirect to dashboard or home after successful login
+      // Redirect to dashboard
       router.push("/dashboard");
     } catch (error: any) {
-      console.error("Login failed:", error);
-      setErrorMessage(
-        error.response?.data?.detail ||
-          "Invalid credentials. Please check your email and password.",
-      );
+      const errorPayload = error.response?.data?.error;
+      const msg =
+        errorPayload?.message ||
+        "An unexpected error occurred. Please try again.";
+
+      setErrorMessage(msg);
       setShowError(true);
+      console.error("Login failed:", msg);
     }
   };
 
   return (
     <div className="relative flex min-h-screen items-center justify-center bg-background p-4 text-foreground">
-      {/* Login Card */}
       <Card className="w-full max-w-md border-border shadow-lg">
         <CardHeader>
           <CardTitle className="text-2xl font-bold">Login</CardTitle>
@@ -79,13 +77,21 @@ export default function LoginPage() {
 
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            {/* Email Field */}
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
                 type="email"
                 placeholder="name@example.com"
-                {...register("email", { required: "Email is required" })}
+                autoComplete="email"
+                {...register("email", {
+                  required: "Email is required",
+                  pattern: {
+                    value: /\S+@\S+\.\S+/,
+                    message: "Invalid email format",
+                  },
+                })}
               />
               {errors.email && (
                 <p className="text-xs font-medium text-destructive">
@@ -94,16 +100,25 @@ export default function LoginPage() {
               )}
             </div>
 
+            {/* Password Field */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="password">Password</Label>
-                <Button variant="link" size="sm" className="px-0 font-normal">
+                <Button
+                  variant="link"
+                  size="sm"
+                  className="px-0 font-normal text-xs"
+                  type="button"
+                  onClick={() => router.push("/forgot-password")}
+                >
                   Forgot password?
                 </Button>
               </div>
               <Input
                 id="password"
                 type="password"
+                placeholder="••••••••"
+                autoComplete="current-password"
                 {...register("password", { required: "Password is required" })}
               />
               {errors.password && (
@@ -117,7 +132,7 @@ export default function LoginPage() {
               {isSubmitting && (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               )}
-              Sign In
+              {isSubmitting ? "Signing in..." : "Sign In"}
             </Button>
           </form>
         </CardContent>
@@ -125,19 +140,23 @@ export default function LoginPage() {
         <CardFooter className="flex justify-center border-t pt-4">
           <p className="text-sm text-muted-foreground">
             Don't have an account?{" "}
-            <Button variant="link" className="p-0 h-auto font-semibold">
+            <Button
+              variant="link"
+              className="p-0 h-auto font-semibold"
+              onClick={() => router.push("/signup")}
+            >
               Sign up
             </Button>
           </p>
         </CardFooter>
       </Card>
 
-      {/* Default Shadcn Alert - Fixed Bottom Right */}
+      {/* Error Alert */}
       {showError && (
-        <div className="fixed bottom-6 right-6 w-full max-w-sm animate-in fade-in slide-in-from-right-5">
+        <div className="fixed bottom-6 right-6 w-full max-w-sm animate-in fade-in slide-in-from-right-5 z-50">
           <Alert variant="destructive" className="relative shadow-2xl">
             <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Error</AlertTitle>
+            <AlertTitle>Login Error</AlertTitle>
             <AlertDescription>{errorMessage}</AlertDescription>
             <Button
               variant="ghost"
