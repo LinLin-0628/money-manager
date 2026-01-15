@@ -81,6 +81,7 @@ coverage.xml
 .pytest_cache/
 .hypothesis/
 cover/
+pytest.xml
 
 ############################
 # Django
