@@ -25,14 +25,6 @@ class UserCreate(BaseModel):
         return v
 
 
-class UserRead(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: UUID
-    email: Annotated[str, EmailStr]
-    name: str
-
-
 class UserLoginForm(BaseModel):
     email: Annotated[str, EmailStr]
     password: str
@@ -42,3 +34,18 @@ class UserLoginForm(BaseModel):
     def clean_email(cls, v: str) -> str:
         v = v.strip().lower()
         return v
+
+
+class UserRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    email: Annotated[str, EmailStr]
+    name: str
+
+
+class UserReadSummary(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    name: str

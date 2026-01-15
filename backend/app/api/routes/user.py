@@ -2,7 +2,8 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, status
 
-from app.api.deps import get_current_user, get_user_service
+from app.api.deps.auth import get_current_user
+from app.api.deps.common import get_user_service
 from app.models.user import User
 from app.schemas.user import UserCreate, UserRead
 from app.services.user import UserService
@@ -18,7 +19,7 @@ def register_user(
     return user_service.register_user(user_data)
 
 
-@router.get("/me", response_model=UserRead)
+@router.get("/me", status_code=status.HTTP_200_OK, response_model=UserRead)
 def read_current_user(
     current_user: Annotated[User, Depends(get_current_user)],
 ) -> User:

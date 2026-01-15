@@ -4,7 +4,7 @@ from typing import Annotated
 from fastapi import APIRouter, Cookie, Depends, Response, status
 from fastapi.security import OAuth2PasswordRequestForm
 
-from app.api.deps import get_auth_service
+from app.api.deps.common import get_auth_service
 from app.core.exceptions.auth import InvalidRefreshToken
 from app.core.settings import settings
 from app.schemas.auth import AccessToken
@@ -67,7 +67,7 @@ def refresh_tokens(
     return AccessToken(access_token=tokens.access_token)
 
 
-@router.post("/logout", status_code=status.HTTP_200_OK)
+@router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
 def logout(
     response: Response,
     auth_service: Annotated[AuthService, Depends(get_auth_service)],

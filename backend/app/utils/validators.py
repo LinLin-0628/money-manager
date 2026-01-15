@@ -1,0 +1,17 @@
+from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
+
+
+def round_decimal(
+    value: str | int | float | Decimal | None, places: str = "0.01"
+) -> Decimal:
+    if value is None:
+        raise ValueError("Invalid numeric value: 'None'")
+
+    try:
+        if isinstance(value, float):
+            value = str(value)
+        rounded_value = Decimal(value)
+    except InvalidOperation as e:
+        raise ValueError(f"Invalid numeric value: {value}") from e
+
+    return rounded_value.quantize(Decimal(places), rounding=ROUND_HALF_UP)
