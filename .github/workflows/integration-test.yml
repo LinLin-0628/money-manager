@@ -64,6 +64,8 @@ jobs:
       - name: Install the project dependencies
         run: uv sync --all-groups
 
+      # TODO: Implement database migrations here
+
       - name: Run integration tests with coverage
         run: |
           uv run pytest tests/integration \
@@ -71,13 +73,13 @@ jobs:
           --cov=app \
           --cov-report=term-missing:skip-covered \
           --cov-report=xml \
-          --cov-report=html \
+          --cov-report=html
 
       - name: Upload coverage reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: coverage-reports
+          name: integration-test-coverage-reports
           path: |
             backend/coverage.xml
             backend/htmlcov/
