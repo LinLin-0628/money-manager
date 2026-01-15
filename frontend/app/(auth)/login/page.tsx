@@ -143,7 +143,7 @@ export default function LoginPage() {
             <Button
               variant="link"
               className="p-0 h-auto font-semibold"
-              onClick={() => router.push("/register")}
+              onClick={() => router.push("/signup")}
             >
               Sign up
             </Button>
