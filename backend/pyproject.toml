@@ -139,6 +139,17 @@ warn_required_dynamic_aliases = true
 [tool.pytest.ini_options]
 pythonpath = ["."]
 testpaths = ["tests"]
+addopts = [
+  "--strict-config",
+  "--strict-markers",
+  "--tb=short"
+]
+markers = [
+  "unit: fast isolated tests",
+  "integration: tests with DB or external services",
+  "e2e: full end-to-end tests",
+]
+
 filterwarnings = [
     "ignore::DeprecationWarning:passlib.handlers.argon2"
 ]
