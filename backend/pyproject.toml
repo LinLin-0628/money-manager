@@ -36,6 +36,8 @@ test = [
     "freezegun>=1.5.5",
     "pytest>=9.0.2",
     "pytest-cov>=7.0.0",
+    "pytest-dotenv>=0.5.2",
+    "pytest-env>=1.2.0",
     "pytest-mock>=3.15.1",
 ]
 
@@ -137,6 +139,20 @@ init_typed = true
 warn_required_dynamic_aliases = true
 
 [tool.pytest.ini_options]
+env_files = [".env.test"]
+pythonpath = ["."]
+testpaths = ["tests"]
+addopts = [
+  "--strict-config",
+  "--strict-markers",
+  "--tb=short"
+]
+markers = [
+  "unit: fast isolated tests",
+  "integration: tests with DB or external services",
+  "e2e: full end-to-end tests",
+]
+
 filterwarnings = [
     "ignore::DeprecationWarning:passlib.handlers.argon2"
 ]
