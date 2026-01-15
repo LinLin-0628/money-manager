@@ -99,6 +99,6 @@ jobs:
         with:
           name: coverage-reports
           path: |
-            coverage.xml
-            htmlcov/
-            pytest.xml
+            backend/coverage.xml
+            backend/htmlcov/
+            backend/pytest.xml
