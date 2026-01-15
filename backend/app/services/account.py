@@ -36,7 +36,7 @@ class AccountService:
         items = [AccountRead.model_validate(acc) for acc in accounts]
 
         logger.info(
-            "Fetch all account complete",
+            "Fetch all accounts complete",
             extra={
                 "total": total,
                 "page": pagination.page,

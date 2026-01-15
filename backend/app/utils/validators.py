@@ -8,6 +8,8 @@ def round_decimal(
         raise ValueError("Invalid numeric value: 'None'")
 
     try:
+        if isinstance(value, float):
+            value = str(value)
         rounded_value = Decimal(value)
     except InvalidOperation as e:
         raise ValueError(f"Invalid numeric value: {value}") from e

@@ -43,7 +43,7 @@ class AccountCreate(BaseModel):
 
     @field_validator("description")
     @classmethod
-    def clean_description(cls, value: str) -> str | None:
+    def clean_description(cls, value: str | None) -> str | None:
         if value:
             value = value.strip()
 
@@ -77,7 +77,7 @@ class AccountUpdate(BaseModel):
 
     @field_validator("description")
     @classmethod
-    def clean_description(cls, value: str) -> str | None:
+    def clean_description(cls, value: str | None) -> str | None:
         if value:
             value = value.strip()
 
