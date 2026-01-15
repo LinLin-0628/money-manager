@@ -53,6 +53,7 @@ jobs:
         working-directory: backend
 
     env:
+      DEBUG: false
       DB_NAME: test_db
       DB_USER: test_user
       DB_PASSWORD: test_password
