@@ -3,6 +3,8 @@ from passlib.exc import UnknownHashError
 
 from app.core.security import hash_password, verify_password
 
+pytestmark = pytest.mark.unit
+
 
 def test_hash_password_not_plaintext():
     """

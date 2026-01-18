@@ -4,8 +4,8 @@ on:
   push:
     branches:
       - main
-  pull_request: {}
-  workflow_dispatch: {}
+  pull_request:
+  workflow_dispatch:
 
 jobs:
 
@@ -68,7 +68,7 @@ jobs:
 
       - name: Run integration tests with coverage
         run: |
-          uv run pytest tests/integration \
+          uv run pytest -m integration \
           --junitxml=pytest.xml \
           --cov=app \
           --cov-report=term-missing:skip-covered \

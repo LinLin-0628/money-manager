@@ -7,6 +7,8 @@ from sqlalchemy.exc import IntegrityError
 from app.models import User
 from tests.factories.user import UserFactory
 
+pytestmark = pytest.mark.integration
+
 
 def test_get_user_by_email_return_user_when_email_exists(db_session, user_repo):
     # Arrange: insert a user into the test DB
