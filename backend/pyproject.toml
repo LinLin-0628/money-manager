@@ -50,7 +50,7 @@ test = [
 target-version = "py313"
 line-length = 88
 extend-exclude = [
-    "migrations"
+    "migrations", "tests"
 ]
 
 [tool.ruff.lint]
