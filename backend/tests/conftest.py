@@ -47,8 +47,6 @@ def setup_test_logging():
 
 
 # SQLAlchemy engine for the test DB
-engine = create_engine(settings.database_url)
-TestingSessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 
 
 @pytest.fixture(scope="session")
@@ -56,6 +54,7 @@ def db_engine():
     """
     Session-scoped engine. Runs Alembic migrations once per test session.
     """
+    engine = create_engine(settings.database_url)
     alembic_cfg = Config("alembic.ini")
     alembic_cfg.set_main_option("sqlalchemy.url", settings.database_url)
     command.upgrade(alembic_cfg, "head")  # apply all migrations
@@ -63,6 +62,7 @@ def db_engine():
     yield engine
 
     command.downgrade(alembic_cfg, "base")
+    engine.dispose()
 
 
 @pytest.fixture(scope="function")
@@ -74,7 +74,8 @@ def db_session(db_engine):
     connection = db_engine.connect()
     transaction = connection.begin()
 
-    session = TestingSessionLocal(bind=connection)
+    Session = sessionmaker(bind=connection, autoflush=False, autocommit=False)
+    session = Session()
 
     # Start with a nested transaction
     nested = connection.begin_nested()
@@ -83,7 +84,7 @@ def db_session(db_engine):
     @event.listens_for(session, "after_transaction_end")
     def restart_savepoint(session, transaction_):
         nonlocal nested
-        if transaction_.nested and not transaction_._parent.nested:
+        if transaction_.nested and not transaction_.parent.nested:
             # Restart the savepoint after it ends (commit or rollback)
             nested = connection.begin_nested()
 
