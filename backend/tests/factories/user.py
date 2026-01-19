@@ -11,9 +11,7 @@ fake = Faker()
 class UserFactory(factory.alchemy.SQLAlchemyModelFactory):
     class Meta:
         model = User
-        sqlalchemy_session_persistence = (
-            "flush"  # keeps in session, does not auto-commit
-        )
+        sqlalchemy_session_persistence = "flush"
 
     # UUID primary key
     id = factory.LazyFunction(uuid.uuid4)
