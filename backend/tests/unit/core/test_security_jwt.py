@@ -18,8 +18,6 @@ from app.core.security import (
     generate_refresh_token,
 )
 
-pytestmark = pytest.mark.unit
-
 # Constants for testing
 USER_ID = uuid.uuid4()
 FAMILY_ID = uuid.uuid4()

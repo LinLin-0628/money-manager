@@ -16,6 +16,22 @@ SESSION_LOG_FILE = LOG_DIR / "test.log"
 FACTORIES = [UserFactory]
 
 
+def pytest_collection_modifyitems(config, items):
+    for item in items:
+        test_path = Path(item.nodeid.split("::")[0])  # Get just the file path part
+
+        if "unit" in test_path.parts:
+            item.add_marker(pytest.mark.unit)
+
+        elif "integration" in test_path.parts:
+            item.add_marker(pytest.mark.integration)
+            item.add_marker(pytest.mark.db)
+
+        elif "e2e" in test_path.parts:
+            item.add_marker(pytest.mark.e2e)
+            item.add_marker(pytest.mark.db)
+
+
 @pytest.fixture(scope="session", autouse=True)
 def setup_test_logging():
     LOG_DIR.mkdir(exist_ok=True, parents=True)
@@ -83,14 +99,17 @@ def db_session(db_engine):
 
 
 @pytest.fixture(scope="function", autouse=True)
-def set_factory_session(db_session):
+def set_factory_session(request, db_session):
     """
     Automatically sets the session for all factories
     at the start of each test and clears it after.
     """
 
-    for factory in FACTORIES:
-        factory._meta.sqlalchemy_session = db_session
+    use_db = "db" in {marker.name for marker in request.node.iter_markers()}
+
+    if use_db:
+        for factory in FACTORIES:
+            factory._meta.sqlalchemy_session = db_session
 
     yield
 

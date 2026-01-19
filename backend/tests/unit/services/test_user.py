@@ -7,8 +7,6 @@ from app.core.exceptions.user import UserAlreadyExists
 from app.schemas.user import UserCreate
 from tests.factories.user import UserFactory
 
-pytestmark = pytest.mark.unit
-
 
 def test_register_user_success(mocker, user_service, mock_user_repo):
     mock_user = UserFactory.build()

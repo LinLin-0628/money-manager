@@ -2,8 +2,6 @@ import pytest
 
 from app.core.security import hash_token, verify_token
 
-pytestmark = pytest.mark.unit
-
 TEST_SECRET = "test-secret"
 
 

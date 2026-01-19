@@ -1,11 +1,8 @@
-import pytest
 from fastapi import status
 from sqlalchemy import select
 
 from app.models import User
 from tests.factories.user import UserFactory
-
-pytestmark = pytest.mark.integration
 
 
 def test_register_user_success(client, db_session):

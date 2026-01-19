@@ -152,6 +152,7 @@ markers = [
   "unit: fast isolated tests",
   "integration: tests with DB or external services",
   "e2e: full end-to-end tests",
+  "db: tests requiring database"
 ]
 
 filterwarnings = [
