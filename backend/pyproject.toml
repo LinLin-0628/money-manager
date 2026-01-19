@@ -34,6 +34,7 @@ other = [
 test = [
     "factory-boy>=3.3.3",
     "freezegun>=1.5.5",
+    "httpx>=0.28.1",
     "pytest>=9.0.2",
     "pytest-cov>=7.0.0",
     "pytest-dotenv>=0.5.2",
@@ -72,7 +73,7 @@ ignore = [
 convention = "google"
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["S101", "S105"]
+"tests/**" = ["S101", "S105", "S106"]
 "app/schemas/*" = ["S105"]
 
 [tool.ruff.lint.isort]
@@ -151,6 +152,7 @@ markers = [
   "unit: fast isolated tests",
   "integration: tests with DB or external services",
   "e2e: full end-to-end tests",
+  "db: tests requiring database"
 ]
 
 filterwarnings = [

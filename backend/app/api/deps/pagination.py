@@ -7,13 +7,12 @@ from app.core.pagination_settings import pagination_settings as pagination
 # Defining the types as reusable Annotated aliases
 PageNumber = Annotated[
     int,
-    Query(pagination.DEFAULT_PAGE, ge=pagination.MIN_PAGE, description="Page number"),
+    Query(ge=pagination.MIN_PAGE, description="Page number"),
 ]
 
 PageSize = Annotated[
     int,
     Query(
-        pagination.DEFAULT_SIZE,
         ge=pagination.MIN_SIZE,
         le=pagination.MAX_SIZE,
         description="Page size, number of items per page",
@@ -24,8 +23,8 @@ PageSize = Annotated[
 class PaginationParams:
     def __init__(
         self,
-        page: PageNumber,
-        size: PageSize,
+        page: PageNumber = pagination.DEFAULT_PAGE,
+        size: PageSize = pagination.DEFAULT_SIZE,
     ):
         self.page = page
         self.size = size
