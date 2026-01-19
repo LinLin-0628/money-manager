@@ -25,11 +25,9 @@ def pytest_collection_modifyitems(config, items):
 
         elif "integration" in test_path.parts:
             item.add_marker(pytest.mark.integration)
-            item.add_marker(pytest.mark.db)
 
         elif "e2e" in test_path.parts:
             item.add_marker(pytest.mark.e2e)
-            item.add_marker(pytest.mark.db)
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -96,23 +94,3 @@ def db_session(db_engine):
         event.remove(session, "after_transaction_end", restart_savepoint)
         transaction.rollback()
         connection.close()
-
-
-@pytest.fixture(scope="function", autouse=True)
-def set_factory_session(request, db_session):
-    """
-    Automatically sets the session for all factories
-    at the start of each test and clears it after.
-    """
-
-    use_db = "db" in {marker.name for marker in request.node.iter_markers()}
-
-    if use_db:
-        for factory in FACTORIES:
-            factory._meta.sqlalchemy_session = db_session
-
-    yield
-
-    # Teardown: Remove the session reference to ensure isolation
-    for factory in FACTORIES:
-        factory._meta.sqlalchemy_session = None
