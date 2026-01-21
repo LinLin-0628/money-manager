@@ -57,6 +57,19 @@ class AccountService:
     def create_account(
         self, current_user: User, account_create_data: AccountCreate
     ) -> Account:
+        """
+        Create a new account owned by the current user.
+        
+        Parameters:
+            current_user (User): The user who will own the created account.
+            account_create_data (AccountCreate): Attributes for the new account.
+        
+        Returns:
+            Account: The newly created account record.
+        
+        Raises:
+            DuplicateAccountError: If an account with the same unique attributes already exists.
+        """
         logger.info(
             "Create account start",
         )
@@ -85,6 +98,12 @@ class AccountService:
             ) from e
 
     def get_account_by_id(self, current_user: User, account_id: int) -> Account | None:
+        """
+        Retrieve an account by its ID scoped to the provided user.
+         
+        Returns:
+            Account | None: The account matching the given `account_id` for `current_user` if found, otherwise `None`.
+        """
         logger.info(
             "Fetch account by id start",
             extra={"account_id": account_id, "user_id": current_user.id},
@@ -108,6 +127,21 @@ class AccountService:
     def update_account(
         self, current_user: User, account_id: int, account_update_data: AccountUpdate
     ) -> Account:
+        """
+        Apply the provided updates to an existing account owned by the current user and persist the changes.
+        
+        Parameters:
+            current_user (User): The user performing the update; used to scope the account lookup.
+            account_id (int): Identifier of the account to update.
+            account_update_data (AccountUpdate): Fields and values to apply to the account.
+        
+        Returns:
+            Account: The updated account instance.
+        
+        Raises:
+            AccountNotFoundError: If no account with the given id exists for the current user.
+            sqlalchemy.exc.IntegrityError: If the database rejects the update due to an integrity constraint.
+        """
         logger.info(
             "Update account start",
             extra={"account_id": account_id, "user_id": current_user.id},
@@ -131,6 +165,17 @@ class AccountService:
             raise
 
     def delete_account(self, current_user: User, account_id: int) -> None:
+        """
+        Delete an account belonging to the current user.
+        
+        Parameters:
+        	current_user (User): The user performing the deletion; used to scope the lookup.
+        	account_id (int): Identifier of the account to delete.
+        
+        Raises:
+        	AccountNotFoundError: If no account with the given id exists for the current user.
+        	IntegrityError: If the repository raises a database integrity error during deletion.
+        """
         logger.info(
             "Delete account start",
             extra={"account_id": account_id, "user_id": current_user.id},

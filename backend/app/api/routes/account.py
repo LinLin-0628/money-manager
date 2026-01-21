@@ -30,6 +30,15 @@ def create_account(
     account_service: Annotated[AccountService, Depends(get_account_service)],
     current_user: Annotated[User, Depends(get_current_user)],
 ) -> AccountRead:
+    """
+    Create a new account for the current user.
+    
+    Parameters:
+        account_create_data (AccountCreate): Data for the new account.
+    
+    Returns:
+        AccountRead: The created account as an AccountRead model.
+    """
     new_account = account_service.create_account(current_user, account_create_data)
     return AccountRead.model_validate(new_account)
 
@@ -41,6 +50,16 @@ def update_account(
     account_service: Annotated[AccountService, Depends(get_account_service)],
     current_user: Annotated[User, Depends(get_current_user)],
 ) -> AccountRead:
+    """
+    Update an existing account belonging to the current user.
+    
+    Parameters:
+        account_id (int): ID of the account to update.
+        account_update_data (AccountUpdate): Fields to update on the account.
+    
+    Returns:
+        AccountRead: The updated account.
+    """
     updated_account = account_service.update_account(
         current_user, account_id, account_update_data
     )
@@ -53,4 +72,10 @@ def delete_account(
     account_service: Annotated[AccountService, Depends(get_account_service)],
     current_user: Annotated[User, Depends(get_current_user)],
 ) -> None:
+    """
+    Delete the account identified by `account_id` for the current user.
+    
+    Parameters:
+        account_id (int): ID of the account to delete.
+    """
     account_service.delete_account(current_user, account_id)
