@@ -4,11 +4,12 @@ from math import ceil
 from sqlalchemy.exc import IntegrityError
 
 from app.api.deps.pagination import PaginationParams
-from app.core.exceptions.account import DuplicateAccountError
+from app.core.exceptions.account import AccountNotFoundError, DuplicateAccountError
 from app.models import Account, User
 from app.repositories.account import AccountRepository
-from app.schemas.account import AccountCreate, AccountRead
+from app.schemas.account import AccountCreate, AccountRead, AccountUpdate
 from app.schemas.pagination import PaginatedResponse
+from app.utils.utils import ensure_uuid
 
 logger = logging.getLogger(__name__)
 
@@ -82,3 +83,49 @@ class AccountService:
             raise DuplicateAccountError(
                 details={"name": account_create_data.name}
             ) from e
+
+    def get_account_by_id(self, current_user: User, account_id: int) -> Account | None:
+        logger.info(
+            "Fetch account by id start",
+            extra={"account_id": account_id, "user_id": current_user.id},
+        )
+
+        account = self.account_repo.get_account_by_id(
+            account_id, ensure_uuid(current_user.id)
+        )
+
+        logger.info(
+            "Fetch account by id complete",
+            extra={
+                "account_id": account_id,
+                "user_id": current_user.id,
+                "found": account is not None,
+            },
+        )
+
+        return account
+
+    def update_account(
+        self, current_user: User, account_id: int, account_update_data: AccountUpdate
+    ) -> Account:
+        logger.info(
+            "Update account start",
+            extra={"account_id": account_id, "user_id": current_user.id},
+        )
+
+        try:
+            account = self.get_account_by_id(current_user, account_id)
+
+            if not account:
+                raise AccountNotFoundError()
+
+            for field, value in account_update_data.model_dump().items():
+                setattr(account, field, value)
+
+            updated_account = self.account_repo.update_account(updated_account=account)
+            self.account_repo.db.commit()
+
+            return updated_account
+        except IntegrityError:
+            logger.exception("Update account field")
+            raise
