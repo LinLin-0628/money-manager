@@ -24,10 +24,12 @@ def upgrade() -> None:
     op.alter_column('accounts', 'created_at',
                existing_type=postgresql.TIMESTAMP(),
                type_=sa.DateTime(timezone=True),
+               server_default=sa.func.now(),
                existing_nullable=False)
     op.alter_column('accounts', 'updated_at',
                existing_type=postgresql.TIMESTAMP(),
                type_=sa.DateTime(timezone=True),
+               server_default=sa.func.now(),
                existing_nullable=False)
     op.drop_constraint(op.f('accounts_name_key'), 'accounts', type_='unique')
     op.create_index(op.f('ix_accounts_user_id'), 'accounts', ['user_id'], unique=False)
