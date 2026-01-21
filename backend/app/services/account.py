@@ -127,6 +127,7 @@ class AccountService:
 
             return updated_account
         except IntegrityError:
+            self.account_repo.db.rollback()
             logger.exception("Update account field")
             raise
 
@@ -151,5 +152,6 @@ class AccountService:
             )
 
         except IntegrityError:
+            self.account_repo.db.rollback()
             logger.exception("Delete account field")
             raise
