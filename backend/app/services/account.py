@@ -129,3 +129,27 @@ class AccountService:
         except IntegrityError:
             logger.exception("Update account field")
             raise
+
+    def delete_account(self, current_user: User, account_id: int) -> None:
+        logger.info(
+            "Delete account start",
+            extra={"account_id": account_id, "user_id": current_user.id},
+        )
+
+        try:
+            account = self.get_account_by_id(current_user, account_id)
+
+            if not account:
+                raise AccountNotFoundError()
+
+            self.account_repo.delete_account(account)
+            self.account_repo.db.commit()
+
+            logger.info(
+                "Delete account complete",
+                extra={"account_id": account_id, "user_id": current_user.id},
+            )
+
+        except IntegrityError:
+            logger.exception("Delete account field")
+            raise

@@ -45,3 +45,12 @@ def update_account(
         current_user, account_id, account_update_data
     )
     return AccountRead.model_validate(updated_account)
+
+
+@router.delete("/{account_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_account(
+    account_id: int,
+    account_service: Annotated[AccountService, Depends(get_account_service)],
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> None:
+    account_service.delete_account(current_user, account_id)
