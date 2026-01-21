@@ -33,3 +33,19 @@ class AccountRepository:
         self.db.flush()
         self.db.refresh(new_account)
         return new_account
+
+    def get_account_by_id(self, account_id: int, user_id: UUID) -> Account | None:
+        stmt = select(Account).where(
+            Account.id == account_id, Account.user_id == user_id
+        )
+        return self.db.execute(stmt).scalar_one_or_none()
+
+    def update_account(self, updated_account: Account) -> Account:
+        self.db.add(updated_account)
+        self.db.flush()
+        self.db.refresh(updated_account)
+        return updated_account
+
+    def delete_account(self, account: Account) -> None:
+        self.db.delete(account)
+        self.db.flush()
