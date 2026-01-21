@@ -46,9 +46,6 @@ def setup_test_logging():
     yield SESSION_LOG_FILE
 
 
-# SQLAlchemy engine for the test DB
-
-
 @pytest.fixture(scope="session")
 def db_engine():
     """

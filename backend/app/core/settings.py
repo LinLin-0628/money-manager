@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     )
 
     debug: bool = False
+    env: str
 
     # Database
     db_name: str

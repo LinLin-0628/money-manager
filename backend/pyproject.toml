@@ -152,9 +152,16 @@ markers = [
   "unit: fast isolated tests",
   "integration: tests with DB or external services",
   "e2e: full end-to-end tests",
-  "db: tests requiring database"
 ]
 
 filterwarnings = [
     "ignore::DeprecationWarning:passlib.handlers.argon2"
+]
+
+[tool.coverage.run]
+source = ["app"]
+omit = [
+    "tests/*",
+    "*/migrations/*",
+    "__init__.py",
 ]
