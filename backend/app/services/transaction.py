@@ -32,7 +32,9 @@ class TransactionService:
         self.account_service = account_service
         self.category_service = category_service
 
-    def get_all_transactions(self, current_user: User, pagination: PaginationParams):
+    def get_all_transactions(
+        self, current_user: User, pagination: PaginationParams
+    ) -> PaginatedResponse[TransactionRead]:
         logger.info(
             "Fetch all transactions start",
             extra={

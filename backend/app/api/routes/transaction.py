@@ -36,7 +36,7 @@ def create_transaction(
         TransactionService, Depends(get_transaction_service)
     ],
     current_user: Annotated[User, Depends(get_current_user)],
-):
+) -> TransactionRead:
     new_transaction = transaction_service.create_transaction(
         current_user, transaction_create_data
     )

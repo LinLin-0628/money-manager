@@ -40,7 +40,7 @@ class TransactionCreate(BaseModel):
 
     @field_validator("amount", mode="before")
     @classmethod
-    def round_amount(cls, value) -> Decimal:
+    def round_amount(cls, value: str | int | float | Decimal | None) -> Decimal:
         return round_decimal(value)
 
     @field_validator("type", mode="before")
@@ -50,7 +50,7 @@ class TransactionCreate(BaseModel):
 
     @field_validator("title")
     @classmethod
-    def clean_name(cls, value) -> str:
+    def clean_name(cls, value: str) -> str:
         if value:
             value = value.strip().lower()
 
@@ -61,7 +61,7 @@ class TransactionCreate(BaseModel):
 
     @field_validator("description")
     @classmethod
-    def clean_description(cls, value) -> str | None:
+    def clean_description(cls, value: str | None) -> str | None:
         if value:
             value = value.strip()
 
@@ -85,7 +85,7 @@ class TransactionUpdate(BaseModel):
 
     @field_validator("amount", mode="before")
     @classmethod
-    def round_amount(cls, value) -> Decimal:
+    def round_amount(cls, value: str | int | float | Decimal | None) -> Decimal:
         return round_decimal(value)
 
     @field_validator("type", mode="before")
@@ -95,7 +95,7 @@ class TransactionUpdate(BaseModel):
 
     @field_validator("title")
     @classmethod
-    def clean_name(cls, value) -> str:
+    def clean_name(cls, value: str) -> str:
         if value:
             value = value.strip().lower()
 
@@ -106,7 +106,7 @@ class TransactionUpdate(BaseModel):
 
     @field_validator("description")
     @classmethod
-    def clean_description(cls, value) -> str | None:
+    def clean_description(cls, value: str | None) -> str | None:
         if value:
             value = value.strip()
 

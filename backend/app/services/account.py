@@ -159,12 +159,12 @@ class AccountService:
             logger.exception("Delete account field")
             raise
 
-    def has_sufficient_balance(self, account: Account, amount: Decimal):
+    def has_sufficient_balance(self, account: Account, amount: Decimal) -> bool:
         return account.balance >= amount
 
     def update_balance(
         self, account: Account, amount: Decimal, transaction_type: TransactionType
-    ):
+    ) -> Account:
         try:
             if transaction_type == TransactionType.INCOME:
                 account.balance += amount
