@@ -1,8 +1,8 @@
 """create category table
 
-Revision ID: 6cff3e3bdab6
-Revises: 9d652c3c857a
-Create Date: 2026-01-22 01:43:31.501414
+Revision ID: ab51ac45ea77
+Revises: 9e04fe49d063
+Create Date: 2026-01-22 17:49:51.491521
 
 """
 from typing import Sequence, Union
@@ -12,8 +12,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '6cff3e3bdab6'
-down_revision: Union[str, Sequence[str], None] = '9d652c3c857a'
+revision: str = 'ab51ac45ea77'
+down_revision: Union[str, Sequence[str], None] = '9e04fe49d063'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
@@ -24,7 +24,7 @@ def upgrade() -> None:
     op.create_table('categories',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(length=100), nullable=False),
-    sa.Column('type', sa.Enum(name='transactiontype'), nullable=False),
+    sa.Column('type', sa.Enum('INCOME', 'EXPENSE', name='transaction_type', create_type=False), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
     sa.Column('user_id', sa.UUID(), nullable=False),
