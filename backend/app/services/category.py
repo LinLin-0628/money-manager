@@ -85,7 +85,7 @@ class CategoryService:
         logger.info(
             "Get category by id complete",
             extra={
-                "category_id": category,
+                "category_id": category_id,
                 "user_id": current_user.id,
                 "found": category is not None,
             },
