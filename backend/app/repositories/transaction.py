@@ -37,3 +37,15 @@ class TransactionRepository:
         self.db.flush()
         self.db.refresh(new_transaction)
         return new_transaction
+
+    def get_transaction_by_id(
+        self, transaction_id: int, user_id: UUID
+    ) -> Transaction | None:
+        stmt = select(Transaction).where(
+            Transaction.id == transaction_id, Transaction.user_id == user_id
+        )
+        return self.db.execute(stmt).scalar_one_or_none()
+
+    def delete_transaction(self, transaction: Transaction) -> None:
+        self.db.delete(transaction)
+        self.db.flush()

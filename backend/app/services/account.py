@@ -182,3 +182,24 @@ class AccountService:
         except IntegrityError as e:
             self.account_repo.db.rollback()
             raise AppException() from e
+
+    def reverse_balance(
+        self, account: Account, amount: Decimal, transaction_type: TransactionType
+    ) -> Account:
+        try:
+            if transaction_type == TransactionType.INCOME:
+                account.balance -= amount
+            elif transaction_type == TransactionType.EXPENSE:
+                account.balance += amount
+            else:
+                raise AppException(
+                    message=f"Unknown transaction type: {transaction_type}"
+                )
+
+            self.account_repo.db.commit()
+            self.account_repo.db.refresh(account)
+            return account
+
+        except IntegrityError as e:
+            self.account_repo.db.rollback()
+            raise AppException() from e

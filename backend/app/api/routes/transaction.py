@@ -41,3 +41,14 @@ def create_transaction(
         current_user, transaction_create_data
     )
     return TransactionRead.model_validate(new_transaction)
+
+
+@router.delete("/{transaction_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_transaction(
+    transaction_id: int,
+    transaction_service: Annotated[
+        TransactionService, Depends(get_transaction_service)
+    ],
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> None:
+    transaction_service.delete_transaction(current_user, transaction_id)
