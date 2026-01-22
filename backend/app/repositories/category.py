@@ -2,7 +2,7 @@ from collections.abc import Sequence
 from uuid import UUID
 
 from sqlalchemy import func, select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.models import Category
 
@@ -21,6 +21,7 @@ class CategoryRepository:
         stmt = (
             select(Category)
             .where(Category.user_id == user_id)
+            .options(selectinload(Category.user))
             .order_by(Category.id)
             .offset(offset)
             .limit(size)
