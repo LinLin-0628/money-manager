@@ -4,10 +4,10 @@ import math
 from sqlalchemy.exc import IntegrityError
 
 from app.api.deps.pagination import PaginationParams
-from app.core.exceptions.category import DuplicateCategoryError
+from app.core.exceptions.category import CategoryNotFoundError, DuplicateCategoryError
 from app.models import Category, User
 from app.repositories.category import CategoryRepository
-from app.schemas.category import CategoryCreate, CategoryRead
+from app.schemas.category import CategoryCreate, CategoryRead, CategoryUpdate
 from app.schemas.pagination import PaginatedResponse
 
 logger = logging.getLogger(__name__)
@@ -72,3 +72,63 @@ class CategoryService:
             logger.warning("Create category failed")
 
             raise DuplicateCategoryError() from e
+
+    def get_category_by_id(self, current_user: User, category_id: int) -> Category:
+        logger.info("Get category by id start", extra={"category_id": category_id})
+
+        category = self.category_repo.get_category_by_id(current_user.id, category_id)
+
+        logger.info(
+            "Get category by id complete",
+            extra={
+                "category_id": category,
+                "user_id": current_user.id,
+                "found": category is not None,
+            },
+        )
+
+        return category
+
+    def update_category(
+        self, current_user: User, category_id: int, category_update_data: CategoryUpdate
+    ) -> Category:
+        logger.info("Update category start", extra={"category_id": category_id})
+
+        try:
+            category = self.get_category_by_id(current_user, category_id)
+
+            if not category:
+                raise CategoryNotFoundError()
+
+            for field, value in category_update_data.model_dump().items():
+                setattr(category, field, value)
+
+            self.category_repo.db.commit()
+            self.category_repo.db.refresh(category)
+
+            logger.info("Update category complete", extra={"category_id": category_id})
+
+            return category
+        except IntegrityError:
+            self.category_repo.db.rollback()
+            logger.exception("Update category field")
+            raise
+
+    def delete_category(self, current_user: User, category_id: int) -> None:
+        logger.info("Delete category start", extra={"category_id": category_id})
+
+        try:
+            category = self.get_category_by_id(current_user, category_id)
+
+            if not category:
+                raise CategoryNotFoundError()
+
+            self.category_repo.delete_category(category)
+            self.category_repo.db.commit()
+
+            logger.info("Delete category complete", extra={"category_id": category_id})
+
+        except IntegrityError:
+            self.category_repo.db.rollback()
+            logger.exception("Delete category field")
+            raise

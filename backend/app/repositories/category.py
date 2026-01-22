@@ -32,3 +32,13 @@ class CategoryRepository:
         self.db.flush()
         self.db.refresh(new_cat)
         return new_cat
+
+    def get_category_by_id(self, user_id: UUID, category_id: int) -> Category:
+        stmt = select(Category).where(
+            Category.id == category_id, Category.user_id == user_id
+        )
+        return self.db.execute(stmt).scalar_one_or_none()
+
+    def delete_category(self, category: Category) -> None:
+        self.db.delete(category)
+        self.db.flush()

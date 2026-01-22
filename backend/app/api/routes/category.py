@@ -1,13 +1,12 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
-from starlette import status
+from fastapi import APIRouter, Depends, status
 
 from app.api.deps.auth import get_current_user
 from app.api.deps.common import get_category_service
 from app.api.deps.pagination import PaginationParams
 from app.models import User
-from app.schemas.category import CategoryCreate, CategoryRead
+from app.schemas.category import CategoryCreate, CategoryRead, CategoryUpdate
 from app.schemas.pagination import PaginatedResponse
 from app.services.category import CategoryService
 
@@ -33,3 +32,27 @@ def create_category(
 ) -> CategoryRead:
     new_cat = category_service.create_category(current_user, category_create_data)
     return CategoryRead.model_validate(new_cat)
+
+
+@router.put(
+    "/{category_id}", status_code=status.HTTP_200_OK, response_model=CategoryRead
+)
+def update_category(
+    category_id: int,
+    category_update_data: CategoryUpdate,
+    category_service: Annotated[CategoryService, Depends(get_category_service)],
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> CategoryRead:
+    updated_cat = category_service.update_category(
+        current_user, category_id, category_update_data
+    )
+    return CategoryRead.model_validate(updated_cat)
+
+
+@router.delete("/{category_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_category(
+    category_id: int,
+    category_service: Annotated[CategoryService, Depends(get_category_service)],
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> None:
+    category_service.delete_category(current_user, category_id)
