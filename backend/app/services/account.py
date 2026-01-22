@@ -1,10 +1,13 @@
 import logging
+from decimal import Decimal
 from math import ceil
 
 from sqlalchemy.exc import IntegrityError
 
 from app.api.deps.pagination import PaginationParams
 from app.core.exceptions.account import AccountNotFoundError, DuplicateAccountError
+from app.core.exceptions.base import AppException
+from app.enum.transaction_type import TransactionType
 from app.models import Account, User
 from app.repositories.account import AccountRepository
 from app.schemas.account import AccountCreate, AccountRead, AccountUpdate
@@ -155,3 +158,27 @@ class AccountService:
             self.account_repo.db.rollback()
             logger.exception("Delete account field")
             raise
+
+    def has_sufficient_balance(self, account: Account, amount: Decimal):
+        return account.balance >= amount
+
+    def update_balance(
+        self, account: Account, amount: Decimal, transaction_type: TransactionType
+    ):
+        try:
+            if transaction_type == TransactionType.INCOME:
+                account.balance += amount
+            elif transaction_type == TransactionType.EXPENSE:
+                account.balance -= amount
+            else:
+                raise AppException(
+                    message=f"Unknown transaction type: {transaction_type}"
+                )
+
+            self.account_repo.db.commit()
+            self.account_repo.db.refresh(account)
+            return account
+
+        except IntegrityError as e:
+            self.account_repo.db.rollback()
+            raise AppException() from e
