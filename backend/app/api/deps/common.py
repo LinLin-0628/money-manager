@@ -6,9 +6,11 @@ from sqlalchemy.orm import Session
 from app.db.database import get_db
 from app.repositories.account import AccountRepository
 from app.repositories.auth import AuthRepository
+from app.repositories.category import CategoryRepository
 from app.repositories.user import UserRepository
 from app.services.account import AccountService
 from app.services.auth import AuthService
+from app.services.category import CategoryService
 from app.services.user import UserService
 
 
@@ -31,3 +33,8 @@ def get_auth_service(db: Annotated[Session, Depends(get_db)]) -> AuthService:
 def get_account_service(db: Annotated[Session, Depends(get_db)]) -> AccountService:
     account_repo = AccountRepository(db)
     return AccountService(account_repo)
+
+
+def get_category_service(db: Annotated[Session, Depends(get_db)]) -> CategoryService:
+    category_repo = CategoryRepository(db)
+    return CategoryService(category_repo)
