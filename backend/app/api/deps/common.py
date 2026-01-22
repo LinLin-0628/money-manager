@@ -35,6 +35,6 @@ def get_account_service(db: Annotated[Session, Depends(get_db)]) -> AccountServi
     return AccountService(account_repo)
 
 
-def get_category_service(db: Annotated[Session, Depends(get_db)]):
+def get_category_service(db: Annotated[Session, Depends(get_db)]) -> CategoryService:
     category_repo = CategoryRepository(db)
     return CategoryService(category_repo)

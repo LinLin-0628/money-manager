@@ -11,7 +11,7 @@ class CategoryRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    def get_total_count(self, user_id: UUID):
+    def get_total_count(self, user_id: UUID) -> int:
         stmt = select(func.count(Category.id)).where(Category.user_id == user_id)
         return self.db.execute(stmt).scalar_one()
 
@@ -33,7 +33,7 @@ class CategoryRepository:
         self.db.refresh(new_cat)
         return new_cat
 
-    def get_category_by_id(self, user_id: UUID, category_id: int) -> Category:
+    def get_category_by_id(self, user_id: UUID, category_id: int) -> Category | None:
         stmt = select(Category).where(
             Category.id == category_id, Category.user_id == user_id
         )

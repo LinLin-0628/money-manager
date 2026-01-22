@@ -53,7 +53,9 @@ class CategoryService:
             items=items,
         )
 
-    def create_category(self, current_user: User, category_create_data: CategoryCreate):
+    def create_category(
+        self, current_user: User, category_create_data: CategoryCreate
+    ) -> Category:
         logger.info("Create category start")
 
         try:
@@ -73,7 +75,9 @@ class CategoryService:
 
             raise DuplicateCategoryError() from e
 
-    def get_category_by_id(self, current_user: User, category_id: int) -> Category:
+    def get_category_by_id(
+        self, current_user: User, category_id: int
+    ) -> Category | None:
         logger.info("Get category by id start", extra={"category_id": category_id})
 
         category = self.category_repo.get_category_by_id(current_user.id, category_id)
