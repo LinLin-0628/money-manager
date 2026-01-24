@@ -1,21 +1,22 @@
 """create refresh_tokens table
 
-Revision ID: c18b5875a50a
-Revises: c5b08e549538
-Create Date: 2026-01-11 21:17:22.081231
+Revision ID: be0f07ef0f89
+Revises: 4cd16917450e
+Create Date: 2026-01-24 17:12:45.853852
 
 """
-
 from typing import Sequence, Union
 
-import sqlalchemy as sa
 from alembic import op
+import sqlalchemy as sa
+
 
 # revision identifiers, used by Alembic.
-revision: str = "c18b5875a50a"
-down_revision: Union[str, Sequence[str], None] = "c5b08e549538"
+revision: str = 'be0f07ef0f89'
+down_revision: Union[str, Sequence[str], None] = '4cd16917450e'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
+
 
 
 def upgrade() -> None:

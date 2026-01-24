@@ -17,10 +17,10 @@ class Category(Base):
         UniqueConstraint("user_id", "name", name="uq_category_user_id_name"),
     )
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     type: Mapped[TransactionType] = mapped_column(
-        sqlalchemy.Enum(TransactionType), nullable=False
+        sqlalchemy.Enum(TransactionType, name="transaction_type"), nullable=False
     )
 
     created_at: Mapped[datetime] = mapped_column(
