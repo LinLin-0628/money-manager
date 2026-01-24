@@ -20,7 +20,12 @@ class Category(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     type: Mapped[TransactionType] = mapped_column(
-        sqlalchemy.Enum(TransactionType, name="transaction_type"), nullable=False
+        sqlalchemy.Enum(
+            TransactionType,
+            name="transaction_type",
+            values_callable=lambda x: [e.value for e in x],
+        ),
+        nullable=False,
     )
 
     created_at: Mapped[datetime] = mapped_column(
