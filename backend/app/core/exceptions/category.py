@@ -11,3 +11,8 @@ class DuplicateCategoryError(AppException):
 class CategoryNotFoundError(AppException):
     status_code = status.HTTP_404_NOT_FOUND
     default_message = "Category not found"
+
+
+class CategoryMismatchError(AppException):
+    status_code = status.HTTP_400_BAD_REQUEST
+    default_message = "Category does not match the transaction type"

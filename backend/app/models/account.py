@@ -43,3 +43,4 @@ class Account(Base):
         index=True,
     )
     user = relationship("User", back_populates="accounts")
+    transactions = relationship("Transaction", back_populates="account")

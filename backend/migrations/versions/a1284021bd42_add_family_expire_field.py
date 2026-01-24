@@ -1,8 +1,8 @@
-"""add family_expires field in refresh_tokens table
+"""add family expire field
 
-Revision ID: 1779b8be435c
-Revises: c18b5875a50a
-Create Date: 2026-01-13 15:35:07.363172
+Revision ID: a1284021bd42
+Revises: be0f07ef0f89
+Create Date: 2026-01-24 17:42:00.420736
 
 """
 from typing import Sequence, Union
@@ -12,10 +12,11 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '1779b8be435c'
-down_revision: Union[str, Sequence[str], None] = 'c18b5875a50a'
+revision: str = 'a1284021bd42'
+down_revision: Union[str, Sequence[str], None] = 'be0f07ef0f89'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
+
 
 
 def upgrade() -> None:
