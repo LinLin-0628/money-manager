@@ -55,7 +55,7 @@ class TransactionCreate(BaseModel):
             value = value.strip().lower()
 
         if not value:
-            raise ValueError("Account name cannot be empty")
+            raise ValueError("Transaction name cannot be empty")
 
         return value
 
@@ -100,7 +100,7 @@ class TransactionUpdate(BaseModel):
             value = value.strip().lower()
 
         if not value:
-            raise ValueError("Account name cannot be empty")
+            raise ValueError("Transaction name cannot be empty")
 
         return value
 

@@ -175,7 +175,7 @@ class AccountService:
                     message=f"Unknown transaction type: {transaction_type}"
                 )
 
-            self.account_repo.db.commit()
+            self.account_repo.db.flush()
             self.account_repo.db.refresh(account)
             return account
 
@@ -196,7 +196,7 @@ class AccountService:
                     message=f"Unknown transaction type: {transaction_type}"
                 )
 
-            self.account_repo.db.commit()
+            self.account_repo.db.flush()
             self.account_repo.db.refresh(account)
             return account
 

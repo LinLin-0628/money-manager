@@ -34,7 +34,7 @@ class Transaction(Base):
         Integer, ForeignKey("accounts.id", ondelete="RESTRICT"), nullable=False
     )
     category_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("categories.id", ondelete="SET NULL"), nullable=True
+        Integer, ForeignKey("categories.id", ondelete="RESTRICT"), nullable=False
     )
 
     user_id: Mapped[uuid.UUID] = mapped_column(

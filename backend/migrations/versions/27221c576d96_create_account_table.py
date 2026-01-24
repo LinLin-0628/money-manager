@@ -48,9 +48,6 @@ def upgrade() -> None:
     # ### end Alembic commands ###
 
     # Create a trigger function to auto-update updated_at
-
-
-    # Attach the trigger to the users table
     op.execute("""
                CREATE TRIGGER update_accounts_updated_at
                BEFORE UPDATE

@@ -15,7 +15,7 @@ class TransactionRepository:
         stmt = select(func.count(Transaction.id)).where(Transaction.user_id == user_id)
         return self.db.execute(stmt).scalar_one()
 
-    def get_all_categories(
+    def get_all_transactions(
         self, user_id: UUID, offset: int, size: int
     ) -> Sequence[Transaction]:
         stmt = (
@@ -26,7 +26,7 @@ class TransactionRepository:
                 selectinload(Transaction.category),
                 selectinload(Transaction.user),
             )
-            .order_by(Transaction.id)
+            .order_by(Transaction.transaction_datetime.desc())
             .offset(offset)
             .limit(size)
         )

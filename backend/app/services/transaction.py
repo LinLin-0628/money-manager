@@ -49,11 +49,11 @@ class TransactionService:
         )
 
         total = self.transaction_repo.get_total_count(current_user.id)
-        categories = self.transaction_repo.get_all_categories(
+        transactions = self.transaction_repo.get_all_transactions(
             current_user.id, pagination.offset, pagination.size
         )
         total_pages = ceil(total / pagination.size) if total > 0 else 1
-        items = [TransactionRead.model_validate(cat) for cat in categories]
+        items = [TransactionRead.model_validate(txn) for txn in transactions]
 
         logger.info(
             "Fetch all transactions complete",
