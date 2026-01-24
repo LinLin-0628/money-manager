@@ -14,7 +14,11 @@ from app.enum.transaction_type import TransactionType
 from app.models import Transaction, User
 from app.repositories.transaction import TransactionRepository
 from app.schemas.pagination import PaginatedResponse
-from app.schemas.transaction import TransactionCreate, TransactionRead
+from app.schemas.transaction import (
+    TransactionCreate,
+    TransactionRead,
+    TransactionUpdate,
+)
 from app.services.account import AccountService
 from app.services.category import CategoryService
 from app.utils.utils import ensure_uuid
@@ -123,6 +127,15 @@ class TransactionService:
             transaction_id, ensure_uuid(current_user.id)
         )
         return transaction
+
+    # TODO: Update transaction service
+    def update_transaction(
+        self,
+        current_user: User,
+        transaction_id: int,
+        transaction_update_data: TransactionUpdate,
+    ) -> Transaction:
+        return Transaction()
 
     def delete_transaction(self, current_user: User, transaction_id: int) -> None:
         try:
