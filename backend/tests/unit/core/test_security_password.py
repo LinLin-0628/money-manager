@@ -1,7 +1,24 @@
 import pytest
+from passlib.context import CryptContext
 from passlib.exc import UnknownHashError
 
 from app.core.security import hash_password, verify_password
+
+
+@pytest.fixture(autouse=True)
+def speed_up_password_hashing(mocker, monkeypatch):
+    """
+    Automatically simplifies Argon2 parameters for all tests.
+    """
+    fast_context = CryptContext(
+        schemes=["argon2"],
+        argon2__time_cost=1,  # Minimum time
+        argon2__memory_cost=8,  # Minimum memory (8 KB)
+        argon2__parallelism=1,  # Minimum CPU
+    )
+
+    # Patch the context inside the security module
+    mocker.patch("app.core.security.pwd_context", fast_context)
 
 
 def test_password_correctness_and_uniqueness():
