@@ -10,6 +10,7 @@ from app.core.exceptions.auth import (
     MalformedRefreshTokenError,
     MalformedTokenError,
     RefreshTokenExpired,
+    RefreshTokenNotFoundError,
     TokenExpired,
 )
 from app.core.exceptions.base import AppException
@@ -144,13 +145,20 @@ class AuthService:
 
         # family_id -> UUID
         family_id_raw = refresh_token_payload.get("family_id")
-        if isinstance(family_id_raw, (str, UUID)):
-            family_id = ensure_uuid(family_id_raw)
-        else:
+
+        if family_id_raw is None:
             raise MalformedRefreshTokenError(
                 "Refresh token family_id is missing",
                 details={"code": "malformed_refresh_token", "logout": True},
             )
+
+        try:
+            family_id = ensure_uuid(family_id_raw)
+        except (ValueError, AttributeError, TypeError) as e:
+            raise MalformedRefreshTokenError(
+                "Refresh token family_id is missing",
+                details={"code": "malformed_refresh_token", "logout": True},
+            ) from e
 
         # family_expires_at -> numeric timestamp -> datetime
         family_expires_at_ts = refresh_token_payload.get("family_expires_at")
@@ -163,13 +171,20 @@ class AuthService:
 
         # subject -> UUID
         user_id_raw = refresh_token_payload.get("sub")
-        if isinstance(user_id_raw, (str, UUID)):
-            user_id = ensure_uuid(user_id_raw)
-        else:
+
+        if user_id_raw is None:
             raise MalformedRefreshTokenError(
                 "Token subject is missing or invalid",
                 details={"code": "malformed_refresh_token", "logout": True},
             )
+
+        try:
+            user_id = ensure_uuid(user_id_raw)
+        except (ValueError, AttributeError, TypeError) as e:
+            raise MalformedRefreshTokenError(
+                "Token subject is missing or invalid",
+                details={"code": "malformed_refresh_token", "logout": True},
+            ) from e
 
         # Check in db
         token_in_db = self.get_token(refresh_token)
@@ -258,7 +273,12 @@ class AuthService:
 
     def _revoke_token(self, refresh_token_id: int) -> None:
         now = get_current_time()
-        self.auth_repo.revoke_token_by_id(refresh_token_id, now)
+        token = self.auth_repo.get_token_by_id(refresh_token_id)
+
+        if not token:
+            raise RefreshTokenNotFoundError()
+
+        self.auth_repo.revoke_token(token, now)
 
     def get_token(self, token: str) -> RefreshToken | None:
         return self.auth_repo.get_refresh_token_by_hash(hash_token(token))

@@ -40,6 +40,10 @@ def get_current_user(
         raise InvalidAccessTokenSignature("Token is not access token")
 
     user_id_raw = payload.get("sub")
+
+    if user_id_raw is None:
+        raise MalformedAccessTokenError("Token subject is missing or invalid")
+
     try:
         user_id = ensure_uuid(user_id_raw)
     except (ValueError, AttributeError, TypeError) as e:
