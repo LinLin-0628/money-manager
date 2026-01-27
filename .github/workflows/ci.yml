@@ -54,6 +54,7 @@ jobs:
 
     env:
       DEBUG: false
+      ENV: test
       DB_NAME: test_db
       DB_USER: test_user
       DB_PASSWORD: test_password
@@ -89,7 +90,6 @@ jobs:
         run: |
           uv run pytest -m unit \
           --junitxml=pytest.xml \
-          --cov=app \
           --cov-report=term-missing:skip-covered \
           --cov-report=xml \
           --cov-report=html

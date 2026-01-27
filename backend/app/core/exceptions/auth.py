@@ -59,3 +59,12 @@ class InvalidRefreshToken(AppException):
 class InvalidCredentials(AppException):
     status_code = status.HTTP_401_UNAUTHORIZED
     default_message = "Invalid email or password"
+
+
+class TokenNotFoundError(AppException):
+    status_code = status.HTTP_404_NOT_FOUND
+    default_message = "Token not found"
+
+
+class RefreshTokenNotFoundError(TokenNotFoundError):
+    default_message = "Refresh token not found"

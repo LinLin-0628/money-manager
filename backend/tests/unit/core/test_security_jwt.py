@@ -1,8 +1,11 @@
+# tests/unit/test_jwt_tokens.py
+
 import uuid
 from datetime import UTC, datetime, timedelta
 
 import pytest
 from freezegun import freeze_time
+from jose import JWSError, jwt
 
 from app.core.exceptions.auth import (
     InvalidTokenSignature,
@@ -14,158 +17,330 @@ from app.core.security import (
     decode_access_token,
     decode_refresh_token,
     generate_access_token,
-    generate_family_id,
     generate_refresh_token,
 )
+from app.core.settings import settings
 
-# Constants for testing
-USER_ID = uuid.uuid4()
-FAMILY_ID = uuid.uuid4()
-SECRET_ACCESS = "test-access-secret"
-SECRET_REFRESH = "test-refresh-secret"
-
-
-def test_generate_family_id_returns_uuid():
-    """
-    Ensure that generate_family_id() returns a valid UUID object.
-    This verifies that the function produces an instance of uuid.UUID.
-    """
-    family_id = generate_family_id()
-    assert isinstance(family_id, uuid.UUID)
+# =====================================================
+# generate_access_token
+# =====================================================
 
 
-def test_generate_family_id_is_unique():
-    """
-    Ensure that generate_family_id() produces unique UUIDs across multiple calls.
-    While collisions are extremely unlikely, this sanity check ensures
-    two consecutive calls do not return the same value.
-    """
-    id1 = generate_family_id()
-    id2 = generate_family_id()
-    assert id1 != id2
-
-
-@freeze_time("2026-01-15 12:00:00")  # Freeze time for deterministic timestamps
-@pytest.mark.parametrize(
-    "iat_delta, exp_delta",
-    [
-        (0, 60),  # 1-minute token
-        (-60, 60),  # issued in past
-        (0, 3600 * 24),  # 1-day token
-    ],
-)
-def test_generate_and_decode_access_token(mocker, iat_delta, exp_delta):
-    """
-    Test that access tokens are generated correctly and can be decoded.
-    Payload fields: sub, type, iat, exp
-    """
-    now = datetime.now(UTC)
-    iat = now + timedelta(seconds=iat_delta)
-    exp = now + timedelta(seconds=exp_delta)
-
-    # Mock secret
+def test_generate_access_token_basic(mocker):
     mocker.patch(
         "app.core.security.settings.access_token_secret.get_secret_value",
-        return_value=SECRET_ACCESS,
+        return_value="access-secret",
     )
 
-    token = generate_access_token(USER_ID, iat, exp)
-    assert isinstance(token, str) and len(token) > 0
+    user_id = uuid.uuid4()
+    iat = datetime.now(UTC)
+    exp = iat + timedelta(hours=1)
 
-    payload = decode_access_token(token)
-    assert payload["sub"] == str(USER_ID)
-    assert payload["type"] == "access"
-    assert payload["iat"] == int(iat.timestamp())
-    assert payload["exp"] == int(exp.timestamp())
+    token = generate_access_token(user_id, iat, exp)
+
+    assert isinstance(token, str)
+
+    payload = jwt.decode(token, "access-secret", algorithms=[settings.algorithm])
+    assert payload == {
+        "sub": str(user_id),
+        "type": "access",
+        "iat": int(iat.timestamp()),
+        "exp": int(exp.timestamp()),
+    }
 
 
-@freeze_time("2026-01-15 12:00:00")
-@pytest.mark.parametrize(
-    "iat_delta, exp_delta, family_expires_delta",
-    [
-        (0, 60, 3600),  # Normal token
-        (-60, 60, 3600),  # Issued in past
-        (0, 3600 * 24, 3600 * 48),  # Long-lived family
-    ],
-)
-def test_generate_and_decode_refresh_token(
-    mocker, iat_delta, exp_delta, family_expires_delta
-):
-    """
-    Test that refresh tokens are generated correctly and can be decoded.
-    Payload fields: sub, type, family_id, iat, exp, family_expires_at
-    """
+def test_generate_access_token_future_iat(mocker):
+    mocker.patch(
+        "app.core.security.settings.access_token_secret.get_secret_value",
+        return_value="access-secret",
+    )
+
     now = datetime.now(UTC)
-    iat = now + timedelta(seconds=iat_delta)
-    exp = now + timedelta(seconds=exp_delta)
-    family_expires_at = now + timedelta(seconds=family_expires_delta)
+    user_id = uuid.uuid4()
 
+    # iat in future
+    future_iat = now + timedelta(hours=1)
+    exp = future_iat + timedelta(hours=1)
+
+    token = generate_access_token(user_id, future_iat, exp)
+    payload = jwt.decode(
+        token,
+        "access-secret",
+        algorithms=[settings.algorithm],
+        options={"verify_exp": False},
+    )
+    assert payload["iat"] == int(future_iat.timestamp())
+
+
+def test_generate_access_token_past_exp(mocker):
+    mocker.patch(
+        "app.core.security.settings.access_token_secret.get_secret_value",
+        return_value="access-secret",
+    )
+
+    now = datetime.now(UTC)
+    user_id = uuid.uuid4()
+
+    # exp < iat
+    past_exp = now - timedelta(seconds=1)
+    token = generate_access_token(user_id, now, past_exp)
+    payload = jwt.decode(
+        token,
+        "access-secret",
+        algorithms=[settings.algorithm],
+        options={"verify_exp": False},
+    )
+    assert payload["exp"] == int(past_exp.timestamp())
+
+
+def test_generate_access_token_exceptions(mocker):
+    mocker.patch(
+        "app.core.security.settings.access_token_secret.get_secret_value",
+        side_effect=Exception("secret failure"),
+    )
+
+    with pytest.raises(Exception, match="secret failure"):
+        generate_access_token(
+            uuid.uuid4(),
+            datetime.now(UTC),
+            datetime.now(UTC) + timedelta(hours=1),
+        )
+
+    mocker.patch(
+        "app.core.security.settings.access_token_secret.get_secret_value",
+        return_value="access-secret",
+    )
+    mocker.patch("app.core.security.settings.algorithm", "invalid-alg")
+
+    with pytest.raises(JWSError):
+        generate_access_token(
+            uuid.uuid4(),
+            datetime.now(UTC),
+            datetime.now(UTC) + timedelta(hours=1),
+        )
+
+
+# =====================================================
+# generate_refresh_token
+# =====================================================
+
+
+def test_generate_refresh_token_basic(mocker):
     mocker.patch(
         "app.core.security.settings.refresh_token_secret.get_secret_value",
-        return_value=SECRET_REFRESH,
+        return_value="refresh-secret",
     )
 
-    token = generate_refresh_token(USER_ID, FAMILY_ID, iat, exp, family_expires_at)
-    assert isinstance(token, str) and len(token) > 0
+    user_id = uuid.uuid4()
+    family_id = uuid.uuid4()
+    iat = datetime.now(UTC)
+    exp = iat + timedelta(days=1)
+    family_expires_at = exp + timedelta(days=7)
 
-    payload = decode_refresh_token(token)
-    assert payload["sub"] == str(USER_ID)
-    assert payload["type"] == "refresh"
-    assert payload["family_id"] == str(FAMILY_ID)
-    assert payload["iat"] == int(iat.timestamp())
-    assert payload["exp"] == int(exp.timestamp())
-    assert payload["family_expires_at"] == int(family_expires_at.timestamp())
+    token = generate_refresh_token(user_id, family_id, iat, exp, family_expires_at)
+
+    payload = jwt.decode(token, "refresh-secret", algorithms=[settings.algorithm])
+
+    assert payload == {
+        "sub": str(user_id),
+        "type": "refresh",
+        "family_id": str(family_id),
+        "iat": int(iat.timestamp()),
+        "exp": int(exp.timestamp()),
+        "family_expires_at": int(family_expires_at.timestamp()),
+    }
 
 
-@freeze_time("2026-01-15 12:00:00")
-def test_decode_token_expired(mocker):
-    """
-    Test that _decode_token raises TokenExpired for expired tokens.
-    """
+def test_generate_refresh_token_time_edge_cases(mocker):
+    mocker.patch(
+        "app.core.security.settings.refresh_token_secret.get_secret_value",
+        return_value="refresh-secret",
+    )
+
     now = datetime.now(UTC)
-    iat = now - timedelta(hours=2)
-    exp = now - timedelta(hours=1)
+    user_id = uuid.uuid4()
+    family_id = uuid.uuid4()
 
+    # family_expires_at < exp
+    token = generate_refresh_token(
+        user_id,
+        family_id,
+        now,
+        now + timedelta(days=1),
+        now,
+    )
+
+    payload = jwt.decode(token, "refresh-secret", algorithms=[settings.algorithm])
+    assert payload["family_expires_at"] == int(now.timestamp())
+
+
+def test_generate_refresh_token_exceptions(mocker):
+    mocker.patch(
+        "app.core.security.settings.refresh_token_secret.get_secret_value",
+        side_effect=Exception("secret failure"),
+    )
+
+    with pytest.raises(Exception, match="secret failure"):
+        generate_refresh_token(
+            uuid.uuid4(),
+            uuid.uuid4(),
+            datetime.now(UTC),
+            datetime.now(UTC) + timedelta(days=1),
+            datetime.now(UTC) + timedelta(days=7),
+        )
+
+
+# =====================================================
+# _decode_token
+# =====================================================
+
+
+def test_decode_token_valid(mocker):
     mocker.patch(
         "app.core.security.settings.access_token_secret.get_secret_value",
-        return_value=SECRET_ACCESS,
+        return_value="access-secret",
     )
 
-    token = generate_access_token(uuid.uuid4(), iat, exp)
+    user_id = uuid.uuid4()
+    iat = datetime.now(UTC)
+    exp = iat + timedelta(hours=1)
+
+    token = generate_access_token(user_id, iat, exp)
+    payload = _decode_token(token, "access-secret")
+
+    assert payload["sub"] == str(user_id)
+
+
+@freeze_time("2025-01-01T12:00:00Z")
+def test_decode_token_expired():
+    user_id = uuid.uuid4()
+    iat = datetime.now(UTC) - timedelta(days=2)
+    exp = datetime.now(UTC) - timedelta(days=1)
+
+    token = jwt.encode(
+        {
+            "sub": str(user_id),
+            "iat": int(iat.timestamp()),
+            "exp": int(exp.timestamp()),
+        },
+        "secret",
+        algorithm=settings.algorithm,
+    )
+
+    with pytest.raises(TokenExpired):
+        _decode_token(token, "secret")
+
+
+def test_decode_token_invalid_signature():
+    token = jwt.encode(
+        {
+            "sub": "123",
+            "iat": int(datetime.now(UTC).timestamp()),
+            "exp": int((datetime.now(UTC) + timedelta(hours=1)).timestamp()),
+        },
+        "correct-secret",
+        algorithm=settings.algorithm,
+    )
+
+    with pytest.raises(InvalidTokenSignature):
+        _decode_token(token, "wrong-secret")
+
+
+def test_decode_token_malformed_inputs():
+    with pytest.raises(MalformedTokenError):
+        _decode_token("not-a-jwt", "secret")
+
+    with pytest.raises(MalformedTokenError):
+        _decode_token("", "secret")
+
+    with pytest.raises(AttributeError):
+        _decode_token(None, "secret")
+
+    with pytest.raises(AttributeError):
+        _decode_token(123, "secret")
+
+    malformed = jwt.encode({"foo": "bar"}, "secret", algorithm=settings.algorithm)
+    with pytest.raises(MalformedTokenError):
+        _decode_token(malformed, "secret")
+
+
+# =====================================================
+# decode_access_token
+# =====================================================
+
+
+def test_decode_access_token_valid(mocker):
+    mocker.patch(
+        "app.core.security.settings.access_token_secret.get_secret_value",
+        return_value="access-secret",
+    )
+
+    user_id = uuid.uuid4()
+    iat = datetime.now(UTC)
+    exp = iat + timedelta(hours=1)
+
+    token = generate_access_token(user_id, iat, exp)
+    payload = decode_access_token(token)
+
+    assert payload["type"] == "access"
+
+
+@freeze_time("2025-01-01T12:00:00Z")
+def test_decode_access_token_expired(mocker):
+    mocker.patch(
+        "app.core.security.settings.access_token_secret.get_secret_value",
+        return_value="access-secret",
+    )
+
+    token = generate_access_token(
+        uuid.uuid4(),
+        datetime.now(UTC) - timedelta(days=2),
+        datetime.now(UTC) - timedelta(days=1),
+    )
+
     with pytest.raises(TokenExpired):
         decode_access_token(token)
 
 
-@freeze_time("2026-01-15 12:00:00")
-def test_decode_token_invalid_signature(mocker):
-    """
-    Test that _decode_token raises InvalidTokenSignature when using the wrong secret.
-    """
-    now = datetime.now(UTC)
-    iat = now
-    exp = now + timedelta(hours=1)
+# =====================================================
+# decode_refresh_token
+# =====================================================
 
-    # Token signed with one secret
+
+def test_decode_refresh_token_valid(mocker):
     mocker.patch(
-        "app.core.security.settings.access_token_secret.get_secret_value",
-        return_value="real-secret",
+        "app.core.security.settings.refresh_token_secret.get_secret_value",
+        return_value="refresh-secret",
     )
-    token = generate_access_token(USER_ID, iat, exp)
 
-    # Decode using different secret
+    user_id = uuid.uuid4()
+    family_id = uuid.uuid4()
+    iat = datetime.now(UTC)
+    exp = iat + timedelta(days=1)
+    family_expires_at = exp + timedelta(days=7)
+
+    token = generate_refresh_token(user_id, family_id, iat, exp, family_expires_at)
+
+    payload = decode_refresh_token(token)
+
+    assert payload["type"] == "refresh"
+    assert payload["family_id"] == str(family_id)
+
+
+@freeze_time("2025-01-01T12:00:00Z")
+def test_decode_refresh_token_expired(mocker):
     mocker.patch(
-        "app.core.security.settings.access_token_secret.get_secret_value",
-        return_value="wrong-secret",
+        "app.core.security.settings.refresh_token_secret.get_secret_value",
+        return_value="refresh-secret",
     )
-    with pytest.raises(InvalidTokenSignature):
-        decode_access_token(token)
 
+    token = generate_refresh_token(
+        uuid.uuid4(),
+        uuid.uuid4(),
+        datetime.now(UTC) - timedelta(days=2),
+        datetime.now(UTC) - timedelta(days=1),
+        datetime.now(UTC) + timedelta(days=1),
+    )
 
-def test_decode_token_malformed():
-    """
-    Test that _decode_token raises MalformedTokenError for invalid/malformed JWT strings
-    """
-    invalid_tokens = ["", "not-a-jwt", "abc.def", "!!!"]
-    for token in invalid_tokens:
-        with pytest.raises(MalformedTokenError):
-            _decode_token(token, SECRET_ACCESS)
+    with pytest.raises(TokenExpired):
+        decode_refresh_token(token)

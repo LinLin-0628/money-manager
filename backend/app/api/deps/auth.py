@@ -1,5 +1,4 @@
 from typing import Annotated
-from uuid import UUID
 
 from fastapi import Depends
 from fastapi.security import OAuth2PasswordBearer
@@ -41,10 +40,14 @@ def get_current_user(
         raise InvalidAccessTokenSignature("Token is not access token")
 
     user_id_raw = payload.get("sub")
-    if isinstance(user_id_raw, (str, UUID)):
-        user_id = ensure_uuid(user_id_raw)
-    else:
+
+    if user_id_raw is None:
         raise MalformedAccessTokenError("Token subject is missing or invalid")
+
+    try:
+        user_id = ensure_uuid(user_id_raw)
+    except (ValueError, AttributeError, TypeError) as e:
+        raise MalformedAccessTokenError("Token subject is missing or invalid") from e
 
     user = user_service.get_user_by_id(user_id)
 

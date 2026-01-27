@@ -30,8 +30,10 @@ class AuthRepository:
         stmt = select(RefreshToken).where(RefreshToken.token_hash == token_hash)
         return self.db.execute(stmt).scalar_one_or_none()
 
-    def revoke_token_by_id(self, token_id: int, now: datetime) -> None:
-        token = self.db.get(RefreshToken, token_id)
-        if token and token.revoked_at is None:
+    def revoke_token(self, token: RefreshToken, now: datetime) -> None:
+        if token.revoked_at is None:
             token.revoked_at = now
             self.db.flush()
+
+    def get_token_by_id(self, refresh_token_id: int) -> RefreshToken | None:
+        return self.db.get(RefreshToken, refresh_token_id)
