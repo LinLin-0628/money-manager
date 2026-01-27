@@ -180,7 +180,7 @@ def test_generate_refresh_token_exceptions(mocker):
         side_effect=Exception("secret failure"),
     )
 
-    with pytest.raises(Exception):  # noqa: B017
+    with pytest.raises(Exception, match="secret failure"):
         generate_refresh_token(
             uuid.uuid4(),
             uuid.uuid4(),

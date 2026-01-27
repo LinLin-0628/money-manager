@@ -31,7 +31,7 @@ class AuthRepository:
         return self.db.execute(stmt).scalar_one_or_none()
 
     def revoke_token(self, token: RefreshToken, now: datetime) -> None:
-        if token and token.revoked_at is None:
+        if token.revoked_at is None:
             token.revoked_at = now
             self.db.flush()
 

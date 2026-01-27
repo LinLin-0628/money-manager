@@ -9,6 +9,11 @@ from tests.test_routes import _test_router
 @pytest.fixture()
 def client():
     app.include_router(_test_router)
+
+    if not getattr(app.state, "_test_routes_included", False):
+        app.include_router(_test_router)
+        app.state._test_routes_included = True
+
     with TestClient(app) as c:
         yield c
 

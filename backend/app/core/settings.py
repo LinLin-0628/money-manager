@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     )
 
     debug: bool = False
-    env: str
+    env: str = "development"
 
     # Database
     db_name: str

@@ -24,6 +24,7 @@ repos:
     hooks:
 
       - id: ruff-check
+        exclude: '.*/tests/.*'
         args: [ --fix, --show-fixes ]
         verbose: true
 
