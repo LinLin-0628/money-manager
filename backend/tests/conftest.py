@@ -11,7 +11,8 @@ from app.core.settings import settings
 from tests.factories.user import UserFactory
 
 LOG_DIR = Path("logs")
-SESSION_LOG_FILE = LOG_DIR / "test.log"
+SESSION_LOG_FILE_TEXT = LOG_DIR / "test.log"
+SESSION_LOG_FILE_JSON = LOG_DIR / "test.json.log"
 
 FACTORIES = [UserFactory]
 
@@ -34,16 +35,20 @@ def pytest_collection_modifyitems(config, items):
 def setup_test_logging():
     LOG_DIR.mkdir(exist_ok=True, parents=True)
 
-    if SESSION_LOG_FILE.exists():
-        SESSION_LOG_FILE.unlink()
+    # Remove old test logs
+    if SESSION_LOG_FILE_TEXT.exists():
+        SESSION_LOG_FILE_TEXT.unlink()
+    if SESSION_LOG_FILE_JSON.exists():
+        SESSION_LOG_FILE_JSON.unlink()
 
-    # Override the file handler in your logging config
-    LOGGING_CONFIG["handlers"]["file"]["filename"] = str(SESSION_LOG_FILE)
+    # Override file handlers for test session
+    LOGGING_CONFIG["handlers"]["file_text"]["filename"] = str(SESSION_LOG_FILE_TEXT)
+    LOGGING_CONFIG["handlers"]["file_json"]["filename"] = str(SESSION_LOG_FILE_JSON)
 
-    # Setup logging to use this session file
+    # Setup logging with overridden handlers
     setup_logging()
 
-    yield SESSION_LOG_FILE
+    yield  # logs are active for all tests
 
 
 @pytest.fixture(scope="session")
