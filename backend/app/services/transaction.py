@@ -10,6 +10,7 @@ from app.core.exceptions.account import (
 )
 from app.core.exceptions.base import AppException
 from app.core.exceptions.category import CategoryMismatchError, CategoryNotFoundError
+from app.core.exceptions.transaction import TransactionNotFoundError
 from app.enum.transaction_type import TransactionType
 from app.models import Transaction, User
 from app.repositories.transaction import TransactionRepository
@@ -135,7 +136,62 @@ class TransactionService:
         transaction_id: int,
         transaction_update_data: TransactionUpdate,
     ) -> Transaction:
-        return Transaction()
+        try:
+            transaction = self.get_transaction_by_id(current_user, transaction_id)
+            if not transaction:
+                raise TransactionNotFoundError()
+
+            old_account = self.account_service.get_account_by_id(
+                current_user, transaction.account_id
+            )
+            if not old_account:
+                raise AccountNotFoundError()
+
+            # ---
+
+            new_amount = transaction_update_data.amount
+            new_type = transaction_update_data.type
+            new_account_id = transaction_update_data.account_id
+            new_category_id = transaction_update_data.category_id
+
+            new_account = self.account_service.get_account_by_id(
+                current_user, new_account_id
+            )
+            if not new_account:
+                raise AccountNotFoundError()
+
+            new_category = self.category_service.get_category_by_id(
+                current_user, new_category_id
+            )
+            if not new_category:
+                raise CategoryNotFoundError()
+
+            if new_category.type != transaction_update_data.type:
+                raise CategoryMismatchError()
+
+            self.account_service.reverse_balance(
+                old_account, transaction.amount, transaction.type
+            )
+
+            sufficient_balance = self.account_service.has_sufficient_balance(
+                new_account, new_amount
+            )
+
+            if new_type == TransactionType.EXPENSE and not sufficient_balance:
+                raise AccountInsufficientBalanceError()
+
+            for field, value in transaction_update_data.model_dump().items():
+                setattr(transaction, field, value)
+
+            self.account_service.update_balance(new_account, new_amount, new_type)
+
+            self.transaction_repo.db.commit()
+
+            return transaction
+
+        except IntegrityError as e:
+            self.transaction_repo.db.rollback()
+            raise AppException() from e
 
     def delete_transaction(self, current_user: User, transaction_id: int) -> None:
         try:
@@ -162,110 +218,3 @@ class TransactionService:
         except IntegrityError as e:
             self.transaction_repo.db.rollback()
             raise AppException() from e
-
-
-"""
-def update_transaction(
-        self,
-        request: Request,
-        transaction_id: int,
-        transaction_update_data: TransactionUpdate,
-    ):
-        # TODO: Allow edit transaction datetime
-        try:
-            transaction = self.get_transaction_by_id(request, transaction_id)
-            if not transaction:
-                raise TransactionNotFoundError()
-
-            old_account = self.account_service.get_account_by_id(
-                request, transaction.account_id
-            )
-            if not old_account:
-                raise AccountNotFoundError()
-
-            old_category = self.category_service.get_category_by_id(
-                request, transaction.category_id
-            )
-            if not old_category:
-                raise CategoryNotFoundError()
-
-            new_amount = (
-                transaction_update_data.amount
-                if transaction_update_data.amount is not None
-                else transaction.amount
-            )
-            new_type = (
-                transaction_update_data.type
-                if transaction_update_data.type is not None
-                else transaction.type
-            )
-            new_title = (
-                transaction_update_data.title
-                if transaction_update_data.title is not None
-                else transaction.title
-            )
-            new_description = (
-                transaction_update_data.description
-                if transaction_update_data.description is not None
-                else transaction.description
-            )
-            new_account_id = (
-                transaction_update_data.account_id
-                if transaction_update_data.account_id is not None
-                else transaction.account_id
-            )
-            new_category_id = (
-                transaction_update_data.category_id
-                if transaction_update_data.category_id is not None
-                else transaction.category_id
-            )
-
-            new_account = self.account_service.get_account_by_id(
-                request, new_account_id
-            )
-            if not new_account:
-                raise AccountNotFoundError()
-
-            new_category = self.category_service.get_category_by_id(
-                request, new_category_id
-            )
-            if not new_category:
-                raise CategoryNotFoundError()
-
-            if new_category.type != transaction_update_data.type:
-                raise CategoryMismatchError()
-
-            self.account_service.reverse_balance(
-                request, old_account, transaction.amount, transaction.type
-            )
-            sufficient_balance = self.account_service.has_sufficient_balance(
-                new_account, new_amount
-            )
-
-            if new_type == TransactionType.EXPENSE and not sufficient_balance:
-                raise AccountInsufficientBalanceError()
-
-            update_data = TransactionUpdate(
-                amount=new_amount,
-                type=new_type,
-                title=new_title,
-                description=new_description,
-                account_id=new_account_id,
-                category_id=new_category_id,
-            )
-
-            updated_transaction = self.transaction_repo.update_transaction(
-                transaction, update_data
-            )
-
-            self.account_service.update_balance(
-                request, new_account, new_amount, new_type
-            )
-            self.transaction_repo.db.commit()
-
-            return updated_transaction
-
-        except IntegrityError as e:
-            self.transaction_repo.db.rollback()
-            raise AppException() from e
-"""
