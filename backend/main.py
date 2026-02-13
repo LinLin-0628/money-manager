@@ -1,3 +1,4 @@
+import logging
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
@@ -8,14 +9,23 @@ from app.api.router import api_router
 from app.core.exception_handler import add_exception_handler
 from app.core.logging import setup_logging
 from app.core.middlewares import RequestIDGeneratorMiddleware, RequestLoggingMiddleware
+from app.db.db_connection import test_db_connection
+
+logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     # Startup
     setup_logging()
+    logger.info("Application startup: logging system initialized")
+    logger.info("FastAPI application is starting")
+
+    test_db_connection()
+
     yield
-    # Shutdown (if needed)
+    # Shutdown
+    logger.info("FastAPI application is shutting down")
 
 
 origins = [
@@ -25,6 +35,7 @@ origins = [
 ]
 
 app = FastAPI(title="Money Manager", lifespan=lifespan)
+
 
 # Add exception handler
 add_exception_handler(app)
