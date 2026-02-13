@@ -9,7 +9,12 @@ from app.core.logging_context import request_id_ctx_var
 from app.core.settings import settings
 
 LOG_DIR = Path("logs")
-LOG_FILE = LOG_DIR / "app.log"
+LOG_FILE_TEXT = LOG_DIR / "app.log"
+LOG_FILE_JSON = LOG_DIR / "app.json.log"
+
+# Dynamic log levels
+FILE_LEVEL = "DEBUG" if settings.debug else "INFO"
+CONSOLE_LEVEL = "INFO"  # ALWAYS INFO or above
 
 
 class UTCJsonFormatter(JsonFormatter):
@@ -27,15 +32,25 @@ class RequestIDFilter(logging.Filter):
 LOGGING_CONFIG = {
     "version": 1,
     "disable_existing_loggers": False,
+    # ─────────────────────────────────────────────
+    # Filters
+    # ─────────────────────────────────────────────
     "filters": {
-        "request_id_filter": {
-            "()": RequestIDFilter,
-        },
+        "request_id_filter": {"()": RequestIDFilter},
     },
+    # ─────────────────────────────────────────────
+    # Formatters
+    # ─────────────────────────────────────────────
     "formatters": {
         "json": {
             "()": UTCJsonFormatter,
             "fmt": "%(asctime)s %(levelname)s %(request_id)s %(name)s %(message)s",
+        },
+        "text": {
+            "format": (
+                "%(asctime)s - %(levelname)s - [%(request_id)s] "
+                "- %(name)s - %(message)s"
+            ),
         },
         "console": {
             "format": (
@@ -44,26 +59,47 @@ LOGGING_CONFIG = {
             ),
         },
     },
+    # ─────────────────────────────────────────────
+    # Handlers
+    # ─────────────────────────────────────────────
     "handlers": {
-        "file": {
+        # JSON log file
+        "file_json": {
             "class": "logging.handlers.RotatingFileHandler",
             "formatter": "json",
             "filters": ["request_id_filter"],
-            "filename": str(LOG_FILE),
+            "filename": str(LOG_FILE_JSON),
             "maxBytes": 10 * 1024 * 1024,
             "backupCount": 5,
             "encoding": "utf-8",
+            "level": FILE_LEVEL,
         },
+        # Text log file
+        "file_text": {
+            "class": "logging.handlers.RotatingFileHandler",
+            "formatter": "text",
+            "filters": ["request_id_filter"],
+            "filename": str(LOG_FILE_TEXT),
+            "maxBytes": 10 * 1024 * 1024,
+            "backupCount": 5,
+            "encoding": "utf-8",
+            "level": FILE_LEVEL,
+        },
+        # Console terminal log
         "console": {
             "class": "logging.StreamHandler",
             "formatter": "console",
             "filters": ["request_id_filter"],
             "stream": "ext://sys.stdout",
+            "level": CONSOLE_LEVEL,
         },
     },
+    # ─────────────────────────────────────────────
+    # Root Logger
+    # ─────────────────────────────────────────────
     "root": {
-        "level": "DEBUG" if settings.debug else "INFO",
-        "handlers": ["file", "console"],
+        "level": "DEBUG",
+        "handlers": ["file_json", "file_text", "console"],
     },
 }
 
