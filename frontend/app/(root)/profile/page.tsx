@@ -8,6 +8,9 @@ import {
   ShieldCheck,
   LogOut,
   AlertCircle,
+  Settings,
+  Bell,
+  Lock,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
@@ -27,7 +30,7 @@ interface UserData {
   name: string;
 }
 
-export default function DashboardPage() {
+export default function ProfilePage() {
   const { logout, accessToken, isLoading: authLoading } = useAuth();
   const router = useRouter();
 
@@ -63,7 +66,7 @@ export default function DashboardPage() {
         const errorMessage =
           err.response?.data?.error?.message || "Failed to load profile.";
         setError(errorMessage);
-        console.error("Dashboard fetch error:", err);
+        console.error("Profile fetch error:", err);
       } finally {
         setFetchLoading(false);
       }
@@ -75,13 +78,11 @@ export default function DashboardPage() {
   // Show loader during auth initialization
   if (authLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="h-10 w-10 animate-spin text-primary" />
-          <p className="text-sm font-medium text-muted-foreground">
-            Initializing session...
-          </p>
-        </div>
+      <div className="flex flex-col items-center justify-center py-12">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+        <p className="mt-4 text-sm font-medium text-muted-foreground">
+          Verifying session...
+        </p>
       </div>
     );
   }
@@ -89,13 +90,11 @@ export default function DashboardPage() {
   // Show loader while fetching user data
   if (fetchLoading && !user) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="h-10 w-10 animate-spin text-primary" />
-          <p className="text-sm font-medium text-muted-foreground">
-            Loading your profile...
-          </p>
-        </div>
+      <div className="flex flex-col items-center justify-center py-12">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+        <p className="mt-4 text-sm font-medium text-muted-foreground">
+          Loading profile details...
+        </p>
       </div>
     );
   }
@@ -103,12 +102,12 @@ export default function DashboardPage() {
   // Show error state if fetch failed
   if (error && !user) {
     return (
-      <div className="flex min-h-screen items-center justify-center p-4 bg-background">
+      <div className="flex items-center justify-center p-4">
         <Card className="w-full max-w-md border-destructive shadow-lg">
           <CardHeader>
             <div className="flex items-center gap-2 text-destructive">
               <AlertCircle className="h-5 w-5" />
-              <CardTitle>Unable to Load Profile</CardTitle>
+              <CardTitle>Error Loading Profile</CardTitle>
             </div>
             <CardDescription className="text-destructive/80">
               {error}
@@ -133,58 +132,67 @@ export default function DashboardPage() {
     );
   }
 
-  // Fallback loader (shouldn't reach here normally)
-  if (!user) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="h-10 w-10 animate-spin text-primary" />
-        </div>
-      </div>
-    );
-  }
+  if (!user) return null;
 
-  // Main dashboard content
   return (
-    <div className="min-h-screen bg-background p-8 animate-in fade-in duration-500">
-      <div className="mx-auto max-w-2xl space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-          <Button
-            variant="outline"
-            onClick={logout}
-            className="gap-2 border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground transition-colors"
-          >
-            <LogOut className="h-4 w-4" />
-            Logout
-          </Button>
-        </div>
+    <div className="animate-in fade-in duration-500 space-y-8">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Account Profile</h1>
+        <p className="text-muted-foreground">Manage your account settings and preferences.</p>
+      </div>
 
-        {/* User Profile Card */}
-        <Card className="shadow-md overflow-hidden">
-          <CardHeader className="border-b bg-muted/30">
+      <div className="grid gap-6 md:grid-cols-2">
+        {/* User Information */}
+        <Card>
+          <CardHeader>
             <div className="flex items-center gap-2">
               <User className="h-5 w-5 text-primary" />
-              <CardTitle>User Profile</CardTitle>
+              <CardTitle>Personal Information</CardTitle>
             </div>
-            <CardDescription>Your account information</CardDescription>
+            <CardDescription>Your basic account details</CardDescription>
           </CardHeader>
-          <CardContent className="pt-6">
-            <div className="space-y-4">
-              <DetailRow
-                icon={<ShieldCheck />}
-                label="User ID"
-                value={user.id}
-                mono
-              />
-              <DetailRow icon={<User />} label="Full Name" value={user.name} />
-              <DetailRow
-                icon={<Mail />}
-                label="Email Address"
-                value={user.email}
-              />
+          <CardContent className="space-y-4">
+            <DetailRow
+              icon={<ShieldCheck />}
+              label="User ID"
+              value={user.id}
+              mono
+            />
+            <DetailRow icon={<User />} label="Full Name" value={user.name} />
+            <DetailRow
+              icon={<Mail />}
+              label="Email Address"
+              value={user.email}
+            />
+          </CardContent>
+        </Card>
+
+        {/* Account Settings / Placeholders */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Settings className="h-5 w-5 text-primary" />
+              <CardTitle>Quick Settings</CardTitle>
             </div>
+            <CardDescription>Manage your app experience</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <Button variant="outline" className="w-full justify-start gap-2" disabled>
+              <Lock className="h-4 w-4" />
+              Change Password
+            </Button>
+            <Button variant="outline" className="w-full justify-start gap-2" disabled>
+              <Bell className="h-4 w-4" />
+              Notifications
+            </Button>
+            <Button
+              variant="outline"
+              className="w-full justify-start gap-2 text-destructive hover:bg-destructive/10"
+              onClick={logout}
+            >
+              <LogOut className="h-4 w-4" />
+              Sign Out
+            </Button>
           </CardContent>
         </Card>
       </div>
@@ -204,16 +212,16 @@ function DetailRow({
   mono?: boolean;
 }) {
   return (
-    <div className="flex items-center justify-between py-2 border-b last:border-0">
+    <div className="flex items-center justify-between py-3 border-b last:border-0">
       <div className="flex items-center gap-3 text-muted-foreground">
-        {React.cloneElement(icon, { className: "h-5 w-5" } as any)}
-        <span className="font-medium text-foreground">{label}</span>
+        {React.cloneElement(icon, { className: "h-4 w-4" } as any)}
+        <span className="text-sm font-medium text-foreground">{label}</span>
       </div>
       <span
         className={
           mono
             ? "text-xs font-mono bg-muted px-2 py-1 rounded border"
-            : "font-medium"
+            : "text-sm font-medium"
         }
       >
         {value}

@@ -46,11 +46,11 @@ export default function SignUpPage() {
        * Your backend user.py: @router.post("/register")
        * Expects JSON matching UserCreate schema: { name, email, password }
        */
-      await api.post("/api/users/register", {
+      await api.post("/api/auth/signup", {
         name: data.name,
         email: data.email,
         password: data.password,
-      });
+      }, { baseURL: "" });
 
       // 2. SUCCESS: Redirect to login page
       router.push("/login");

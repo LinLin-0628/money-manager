@@ -46,13 +46,13 @@ export default function LoginPage() {
       params.append("username", data.email);
       params.append("password", data.password);
 
-      const response = await api.post("/api/auth/login", params);
+      const response = await api.post("/api/auth/login", params, { baseURL: "" });
 
       // Set the access token (refresh_token is in HttpOnly cookie)
       setAccessToken(response.data.access_token);
 
       // Redirect to dashboard
-      router.push("/dashboard");
+      router.push("/");
     } catch (error: any) {
       const errorPayload = error.response?.data?.error;
       const msg =

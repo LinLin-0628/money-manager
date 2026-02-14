@@ -4,6 +4,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { Loader2 } from "lucide-react";
+import { Navbar } from "@/components/Navbar";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { accessToken, isLoading: authLoading } = useAuth();
@@ -32,6 +33,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     );
   }
 
-  // Once authenticated, render the dashboard page
-  return <>{children}</>;
+  // Once authenticated, render the dashboard page with Navbar
+  return (
+    <div className="flex min-h-screen flex-col">
+      <Navbar />
+      <main className="flex-1 container px-4 md:px-12 py-6">
+        {children}
+      </main>
+    </div>
+  );
 }
