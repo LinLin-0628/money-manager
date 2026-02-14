@@ -64,6 +64,13 @@ class Settings(BaseSettings):
     test_log_file_text: str = "test_app.log"
     test_log_file_json: str = "test_app.json.log"
 
+    # CORS
+    backend_cors_origins: list[str] = [
+        "http://localhost:5173",
+        "http://localhost:3000",
+        "http://127.0.0.1:5173",
+    ]
+
     @property
     def database_url(self) -> str:
         return (

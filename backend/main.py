@@ -30,12 +30,6 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     logger.info("FastAPI application is shutting down")
 
 
-origins = [
-    "http://localhost:5173",  # Vite default
-    "http://localhost:3000",  # Next.js/React default
-    "http://127.0.0.1:5173",
-]
-
 app = FastAPI(title="Money Manager", lifespan=lifespan)
 
 
@@ -47,7 +41,7 @@ app.add_middleware(RequestLoggingMiddleware)
 app.add_middleware(RequestIDGeneratorMiddleware)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=settings.backend_cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
