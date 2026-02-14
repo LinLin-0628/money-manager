@@ -2,3 +2,12 @@
 algorithm: "HS256"
 access_token_expire_minutes: 30
 refresh_token_expire_days: 7
+
+# Logging configuration
+log_folder: "logs"
+log_file_text: "app.log"
+log_file_json: "app.json.log"
+
+test_log_dir: "test_logs"
+test_log_file_text: "test_app.log"
+test_log_file_json: "test_app.json.log"

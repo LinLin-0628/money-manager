@@ -100,3 +100,10 @@ jobs:
             backend/coverage.xml
             backend/htmlcov/
             backend/pytest.xml
+
+      - name: Upload test logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-logs
+          path: backend/test_logs/

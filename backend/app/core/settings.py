@@ -56,6 +56,13 @@ class Settings(BaseSettings):
 
     # Logging
     logging_hmac_secret: SecretStr
+    log_dir: str = "logs"
+    log_file_text: str = "app.log"
+    log_file_json: str = "app.json.log"
+
+    test_log_dir: str = "test_logs"
+    test_log_file_text: str = "test_app.log"
+    test_log_file_json: str = "test_app.json.log"
 
     @property
     def database_url(self) -> str:
