@@ -1,7 +1,16 @@
 import axios from "axios";
 
+const getBaseURL = () => {
+  // If we're on the server, use the internal API_URL
+  if (typeof window === "undefined") {
+    return process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || "http://backend:8000";
+  }
+  // If we're on the client, use the NEXT_PUBLIC_API_URL
+  return process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+};
+
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000",
+  baseURL: getBaseURL(),
   withCredentials: true,
 });
 
