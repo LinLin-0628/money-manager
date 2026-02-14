@@ -38,7 +38,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const logout = async () => {
     try {
       // Call backend to clear the refresh_token cookie
-      await api.post("/api/auth/logout");
+      await api.post("/api/auth/logout", {}, { baseURL: "" });
     } catch (error) {
       // Even if logout fails, clear local token
       console.error("Logout request failed:", error);
@@ -62,7 +62,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     const restoreSession = async () => {
       try {
-        const { data } = await api.post("/api/auth/refresh");
+        const { data } = await api.post("/api/auth/refresh", {}, { baseURL: "" });
         updateAccessToken(data.access_token);
         console.log("Auth: Session restored via refresh token.");
       } catch (error) {

@@ -68,9 +68,9 @@ export const setupInterceptors = (
 
         try {
           const response = await axios.post(
-            `${api.defaults.baseURL}/api/auth/refresh`,
+            "/api/auth/refresh",
             {},
-            { withCredentials: true },
+            { withCredentials: true }
           );
 
           const { access_token } = response.data;
@@ -102,5 +102,32 @@ export const setupInterceptors = (
     api.interceptors.response.eject(resInterceptor);
   };
 };
+
+/**
+ * Helper to forward headers from Next.js API Routes to the backend.
+ * This ensures that the proxy correctly passes the Authorization token
+ * and the Refresh Token cookie.
+ */
+export async function getProxyConfig() {
+  // Dynamic import to avoid issues in client-side bundles
+  const { headers } = await import("next/headers");
+  const headersList = await headers();
+
+  const config: any = {
+    headers: {},
+  };
+
+  const authHeader = headersList.get("authorization");
+  if (authHeader) {
+    config.headers.Authorization = authHeader;
+  }
+
+  const cookieHeader = headersList.get("cookie");
+  if (cookieHeader) {
+    config.headers.Cookie = cookieHeader;
+  }
+
+  return config;
+}
 
 export default api;
