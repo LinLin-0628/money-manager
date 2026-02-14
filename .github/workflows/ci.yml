@@ -54,7 +54,7 @@ jobs:
 
     environment: test
     env:
-      DEBUG: ${{ secrets.DEBUG }}
+      DEBUG: ${{ vars.DEBUG }}
       APP_ENV: test
       DB_NAME: ${{ secrets.DB_NAME }}
       DB_USER: ${{ secrets.DB_USER }}
