@@ -1,14 +1,43 @@
+import os
+from pathlib import Path
+from typing import Any
+
+import yaml
 from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
+def get_env_file() -> str:
+    env = os.getenv("APP_ENV", "development")
+    if env == "production":
+        return ".env.production"
+    if env == "test":
+        return ".env.test"
+    return ".env.development"
+
+
+def load_yaml_config() -> dict[str, Any]:
+    config_path = Path(__file__).parent.parent.parent / "config.yaml"
+    if config_path.exists():
+        with config_path.open("r", encoding="utf-8") as f:
+            return yaml.safe_load(f) or {}
+    return {}
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=".env.development", env_file_encoding="utf-8", extra="ignore"
+        env_file=get_env_file(), env_file_encoding="utf-8", extra="ignore"
     )
 
+    def __init__(self, **values: Any):
+        yaml_config = load_yaml_config()
+        # YAML values have lower priority than environment variables
+        # but higher priority than class defaults
+        combined_values = {**yaml_config, **values}
+        super().__init__(**combined_values)
+
     debug: bool = False
-    env: str = "development"
+    app_env: str = "development"
 
     # Database
     db_name: str

@@ -466,6 +466,7 @@ dependencies = [
     { name = "python-jose", extra = ["cryptography"] },
     { name = "python-json-logger" },
     { name = "python-multipart" },
+    { name = "pyyaml" },
     { name = "sqlalchemy" },
     { name = "uvicorn" },
 ]
@@ -505,6 +506,7 @@ requires-dist = [
     { name = "python-jose", extras = ["cryptography"], specifier = ">=3.5.0" },
     { name = "python-json-logger", specifier = ">=4.0.0" },
     { name = "python-multipart", specifier = ">=0.0.21" },
+    { name = "pyyaml", specifier = ">=6.0.2" },
     { name = "sqlalchemy", specifier = ">=2.0.45" },
     { name = "uvicorn", specifier = ">=0.40.0" },
 ]
