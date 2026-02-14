@@ -20,7 +20,7 @@ export default function GuestGuard({ children }: GuestGuardProps) {
   useEffect(() => {
     // If auth check is finished and user HAS a token, redirect to dashboard
     if (!isLoading && accessToken) {
-      router.push("/dashboard");
+      router.push("/");
     }
   }, [accessToken, isLoading, router]);
 

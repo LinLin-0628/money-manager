@@ -52,7 +52,7 @@ export default function LoginPage() {
       setAccessToken(response.data.access_token);
 
       // Redirect to dashboard
-      router.push("/dashboard");
+      router.push("/");
     } catch (error: any) {
       const errorPayload = error.response?.data?.error;
       const msg =
