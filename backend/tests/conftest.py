@@ -10,9 +10,9 @@ from app.core.logging import LOGGING_CONFIG, setup_logging
 from app.core.settings import settings
 from tests.factories.user import UserFactory
 
-LOG_DIR = Path("logs")
-SESSION_LOG_FILE_TEXT = LOG_DIR / "test.log"
-SESSION_LOG_FILE_JSON = LOG_DIR / "test.json.log"
+LOG_DIR = Path(settings.test_log_dir)
+SESSION_LOG_FILE_TEXT = LOG_DIR / settings.test_log_file_text
+SESSION_LOG_FILE_JSON = LOG_DIR / settings.test_log_file_json
 
 FACTORIES = [UserFactory]
 

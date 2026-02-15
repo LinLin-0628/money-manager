@@ -60,7 +60,7 @@ export default function ProfilePage() {
       try {
         setFetchLoading(true);
         setError(null);
-        const response = await api.get("/api/users/me");
+        const response = await api.get("/api/users/me", { baseURL: "" });
         setUser(response.data);
       } catch (err: any) {
         const errorMessage =

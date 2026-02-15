@@ -8,13 +8,13 @@ from pythonjsonlogger.json import JsonFormatter
 from app.core.logging_context import request_id_ctx_var
 from app.core.settings import settings
 
-LOG_DIR = Path("logs")
-LOG_FILE_TEXT = LOG_DIR / "app.log"
-LOG_FILE_JSON = LOG_DIR / "app.json.log"
+LOG_DIR = Path(settings.log_dir)
+LOG_FILE_TEXT = LOG_DIR / settings.log_file_text
+LOG_FILE_JSON = LOG_DIR / settings.log_file_json
 
 # Dynamic log levels
-FILE_LEVEL = "DEBUG" if settings.debug else "INFO"
-CONSOLE_LEVEL = "INFO"  # ALWAYS INFO or above
+FILE_LEVEL = logging.DEBUG if settings.debug else logging.INFO
+CONSOLE_LEVEL = logging.INFO  # ALWAYS INFO or above
 
 
 class UTCJsonFormatter(JsonFormatter):

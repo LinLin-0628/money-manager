@@ -12,11 +12,13 @@ dependencies = [
     "psycopg[binary]>=3.3.2",
     "pydantic>=2.12.5",
     "pydantic-settings>=2.12.0",
+    "pyyaml>=6.0.2",
     "python-jose[cryptography]>=3.5.0",
     "python-json-logger>=4.0.0",
     "python-multipart>=0.0.21",
     "sqlalchemy>=2.0.45",
     "uvicorn>=0.40.0",
+    "types-pyyaml>=6.0.12.20250915",
 ]
 
 [dependency-groups]

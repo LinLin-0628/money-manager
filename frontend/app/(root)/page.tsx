@@ -50,7 +50,7 @@ export default function DashboardPage() {
       hasFetchedRef.current = true;
       try {
         setFetchLoading(true);
-        const response = await api.get("/api/users/me");
+        const response = await api.get("/api/users/me", { baseURL: "" });
         setUser(response.data);
       } catch (err: any) {
         console.error("Dashboard fetch error:", err);
