@@ -1,0 +1,48 @@
+services:
+  db:
+    image: postgres:15
+    container_name: money-manager-db
+    env_file:
+      - ./backend/.env.production
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: money-manager-backend
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./backend/.env.production
+    environment:
+      - DB_HOST=db
+      - APP_ENV=production
+      - BACKEND_CORS_ORIGINS=["http://localhost:3000"]
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: money-manager-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - API_URL=http://backend:8000
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
