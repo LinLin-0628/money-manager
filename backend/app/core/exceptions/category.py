@@ -13,6 +13,6 @@ class CategoryNotFoundError(AppException):
     default_message = "Category not found"
 
 
-class CategoryMismatchError(AppException):
+class CategoryTypeMismatchError(AppException):
     status_code = status.HTTP_400_BAD_REQUEST
-    default_message = "Category does not match the transaction type"
+    default_message = "Category does not match the type"
