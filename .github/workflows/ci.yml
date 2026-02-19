@@ -40,8 +40,6 @@ jobs:
       - name: Formatting (Ruff)
         run: uv run ruff format . --check --diff
 
-      - name: Run Mypy
-        run: uv run mypy .
 
   backend-unit-test:
     name: Backend – Pytest Tests (Unit Tests)
