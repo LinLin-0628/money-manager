@@ -32,38 +32,36 @@ class RequestIDFilter(logging.Filter):
 LOGGING_CONFIG = {
     "version": 1,
     "disable_existing_loggers": False,
-    # ─────────────────────────────────────────────
-    # Filters
-    # ─────────────────────────────────────────────
+    # ───────────── Filters ─────────────
     "filters": {
         "request_id_filter": {"()": RequestIDFilter},
     },
-    # ─────────────────────────────────────────────
-    # Formatters
-    # ─────────────────────────────────────────────
+    # ───────────── Formatters ─────────────
     "formatters": {
         "json": {
             "()": UTCJsonFormatter,
-            "fmt": "%(asctime)s %(levelname)s %(request_id)s %(name)s %(message)s",
+            "fmt": (
+                "%(asctime)s %(levelname)s %(request_id)s %(name)s "
+                "%(module)s %(funcName)s %(lineno)d %(process)d %(threadName)s %(message)s"  # noqa: E501
+            ),
         },
         "text": {
             "format": (
                 "%(asctime)s - %(levelname)s - [%(request_id)s] "
-                "- %(name)s - %(message)s"
+                "- %(name)s - %(module)s:%(funcName)s:%(lineno)d "
+                "process=%(process)d thread=%(threadName)s - %(message)s"
             ),
         },
         "console": {
             "format": (
                 "%(asctime)s - %(levelname)s - [%(request_id)s] "
-                "- %(name)s - %(message)s"
+                "- %(name)s - %(module)s:%(funcName)s:%(lineno)d "
+                "process=%(process)d thread=%(threadName)s - %(message)s"
             ),
         },
     },
-    # ─────────────────────────────────────────────
-    # Handlers
-    # ─────────────────────────────────────────────
+    # ───────────── Handlers ─────────────
     "handlers": {
-        # JSON log file
         "file_json": {
             "class": "logging.handlers.RotatingFileHandler",
             "formatter": "json",
@@ -74,7 +72,6 @@ LOGGING_CONFIG = {
             "encoding": "utf-8",
             "level": FILE_LEVEL,
         },
-        # Text log file
         "file_text": {
             "class": "logging.handlers.RotatingFileHandler",
             "formatter": "text",
@@ -85,7 +82,6 @@ LOGGING_CONFIG = {
             "encoding": "utf-8",
             "level": FILE_LEVEL,
         },
-        # Console terminal log
         "console": {
             "class": "logging.StreamHandler",
             "formatter": "console",
@@ -94,12 +90,45 @@ LOGGING_CONFIG = {
             "level": CONSOLE_LEVEL,
         },
     },
-    # ─────────────────────────────────────────────
-    # Root Logger
-    # ─────────────────────────────────────────────
+    # ───────────── Root Logger ─────────────
     "root": {
         "level": "DEBUG",
         "handlers": ["file_json", "file_text", "console"],
+    },
+    # ───────────── Loggers ─────────────
+    "loggers": {
+        # SQLAlchemy → file only
+        "sqlalchemy": {
+            "level": "INFO",
+            "handlers": ["file_json", "file_text"],
+            "propagate": False,
+        },
+        "sqlalchemy.engine": {
+            "level": "INFO",
+            "handlers": ["file_json", "file_text"],
+            "propagate": False,
+        },
+        "sqlalchemy.orm": {
+            "level": "INFO",
+            "handlers": ["file_json", "file_text"],
+            "propagate": False,
+        },
+        "sqlalchemy.pool": {
+            "level": "INFO",
+            "handlers": ["file_json", "file_text"],
+            "propagate": False,
+        },
+        # Uvicorn logs
+        "uvicorn.error": {
+            "level": "INFO",
+            "handlers": ["file_json", "file_text", "console"],
+            "propagate": False,
+        },
+        "uvicorn.access": {
+            "level": "INFO",
+            "handlers": [],
+            "propagate": False,
+        },
     },
 }
 
