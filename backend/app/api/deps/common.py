@@ -6,11 +6,13 @@ from sqlalchemy.orm import Session
 from app.db.database import get_db
 from app.repositories.account import AccountRepository
 from app.repositories.auth import AuthRepository
+from app.repositories.budget import BudgetRepository
 from app.repositories.category import CategoryRepository
 from app.repositories.transaction import TransactionRepository
 from app.repositories.user import UserRepository
 from app.services.account import AccountService
 from app.services.auth import AuthService
+from app.services.budget import BudgetService
 from app.services.category import CategoryService
 from app.services.transaction import TransactionService
 from app.services.user import UserService
@@ -53,3 +55,12 @@ def get_transaction_service(
     category_service = CategoryService(category_repo)
 
     return TransactionService(transaction_repo, account_service, category_service)
+
+
+def get_budget_service(db: Annotated[Session, Depends(get_db)]) -> BudgetService:
+    budget_repo = BudgetRepository(db)
+    category_repo = CategoryRepository(db)
+
+    category_service = CategoryService(category_repo)
+
+    return BudgetService(budget_repo, category_service)
