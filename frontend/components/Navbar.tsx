@@ -21,6 +21,7 @@ const navItems = [
   { name: "Transactions", href: "/transactions" },
   { name: "Accounts", href: "/accounts" },
   { name: "Categories", href: "/categories" },
+  {name: "Budgets", href: "/budgets"}
 ];
 
 export function Navbar() {
