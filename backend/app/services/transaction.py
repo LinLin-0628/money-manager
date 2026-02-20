@@ -9,7 +9,10 @@ from app.core.exceptions.account import (
     AccountNotFoundError,
 )
 from app.core.exceptions.base import AppException
-from app.core.exceptions.category import CategoryMismatchError, CategoryNotFoundError
+from app.core.exceptions.category import (
+    CategoryNotFoundError,
+    CategoryTypeMismatchError,
+)
 from app.core.exceptions.transaction import TransactionNotFoundError
 from app.enum.transaction_type import TransactionType
 from app.models import Transaction, User
@@ -91,7 +94,7 @@ class TransactionService:
                 raise CategoryNotFoundError()
 
             if category.type != transaction_create_data.type:
-                raise CategoryMismatchError()
+                raise CategoryTypeMismatchError()
 
             sufficient_balance = self.account_service.has_sufficient_balance(
                 account, transaction_create_data.amount
@@ -167,7 +170,7 @@ class TransactionService:
                 raise CategoryNotFoundError()
 
             if new_category.type != transaction_update_data.type:
-                raise CategoryMismatchError()
+                raise CategoryTypeMismatchError()
 
             self.account_service.reverse_balance(
                 old_account, transaction.amount, transaction.type
